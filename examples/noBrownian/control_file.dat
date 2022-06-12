@@ -1,0 +1,37 @@
+2                       !0:no 1:YAMAKAWAcorrection 2:Regular_CORRECTION
+.true.                  !FTS_method
+.true.                  !use Lub
+.false.                   !use DEM
+.false.                   !usecollision
+.false.                   !useGMRESmethod
+.false.                  !Xshaer condition(error)
+.true.                   !Period condition
+.false.                   !Oscillation_shear
+.false.                   !fix
+2                        ! IsCaseLattice 0:normal 1:SC 2:BCC 3:FCC
+1                        ! begin
+1                        ! interval
+6                        !NUM_THREADS
+5000                     !timestep 
+1.d0                     !radii test
+0.0 0.0 0.0              ! background Uvector
+0.0 0.0 0.0              ! background Omegavector
+0.0 0.0 0.0 0.0 0.0 0.0  ! background Einf11,Einf22,Einf33,Einf12,Einf13,Einf23
+0.318309886                   !mu_f
+1.d0                  !pho_f
+1                      ! Renolds number
+0.1d0                        !Gamma_alpha
+50000.0                  ! DEM:ksp  
+0.1                      ! DEM:erest 
+0.05                  ! DEM:pho_par
+1.E-4                    ! EWALD SUMMATION ERROR LINERR
+.FALSE.                  ! BROWN
+1                         !collision_condition 0:per elastic 1:Viscoelastic 2:other
+.false.                  ! muCalculate
+0                        ! initial time
+10.0                        ! END TIME
+0.002                    ! DT
+5                       ! WRITE FREQUENCY
+1                        ! LJ EPS
+2                        ! LJ SIGMA
+5                        ! LJ CUT 

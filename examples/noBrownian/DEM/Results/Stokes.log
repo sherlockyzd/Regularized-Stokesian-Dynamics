@@ -1,0 +1,635 @@
+ **************************************************************************
+ Log file for run: Stokes
+ **************************************************************************
+
+&DEMOPTIONS
+ RESTARTFLAG=F,
+ NUMPRTCL=         54,
+ NUMPRTCLFIX=          0,
+ DTDEM=  9.9999999999999995E-007,
+ GRAVITY%X=  0.0000000000000000     ,
+ GRAVITY%Y=  0.0000000000000000     ,
+ GRAVITY%Z=  0.0000000000000000     ,
+ MINPOINT%X=  0.0000000000000000     ,
+ MINPOINT%Y=  0.0000000000000000     ,
+ MINPOINT%Z=  0.0000000000000000     ,
+ MAXPOINT%X=  6.9980892647027951E-003,
+ MAXPOINT%Y=  6.9980892647027951E-003,
+ MAXPOINT%Z=  6.9980892647027951E-003,
+ CS_METHOD=          1,
+ CF_TYPE=          2,
+ CT_MODEL=          1,
+ PI_METHOD=          3,
+ PRI_METHOD=          3,
+ NUMPRTCL_TYPE=          1,
+ NUMWALL_TYPE=          1,
+ CS_NUMLVLS=          0,
+ CNTCTLIST_SIZE=          6,
+ BASE_WALL_ID=   10000000,
+ WALL_MAX_UPDATE_ITER=        100,
+ WALL_NEIGHBOR_RATIO=  2.0000000000000000     ,
+ RUNNAME="Stokes                                                          ",
+ RES_DIR="./DEM/Results/                                                  ",
+ RESTARTDIR="./DEM/Restart/                                                  ",
+ BACKUPFREQDEM=      20000,
+ SAVEVISUDEM=       5000,
+ CMD_LFILE_FREQ=      10000,
+ LF_FILE_LVL=          5,
+ LF_CMDW_LVL=          3,
+ GEOMETRYSOURCE=          1,
+ GEOM_DIR="DEMGeom.stl                                                     ",
+ IFIRSTDEM=          1,
+ ILASTDEM=     100000,
+ PRTCL_CS_RATIO=  1.0000000000000000     ,
+ ISPERIODIC= 3*T,
+ /
+&PARTICLEPHYSICALPROPERTY
+ BIN_DIVIDED=  1.0000000000000000     ,
+ DENSITY=  2650.0000000000000     ,
+ DIAMETER=  1.0000000000000000E-004,
+ YOUNGSMODULUS_P=  50000000.000000000     ,
+ POISSONRATIO_P= 0.29999999999999999     ,
+ FRICTIONCOE_S_PP= 0.40000000000000002     ,
+ FRICTIONCOE_K_PP= 0.40000000000000002     ,
+ FRICTIONCOE_ROLL_PP= 0.10000000000000001     ,
+ RESTITUTIONCOE_N_PP= 0.29999999999999999     ,
+ RESTITUTIONCOE_T_PP= 0.80000000000000004     ,
+ /
+
+ >> Step1: Physical properties of particels and walls are set.
+   > Physical properties contains 1 particle types and 1 wall types.
+
+ >> Step2: Geometry is set
+   > Geometry Contains 0 Plane walls.
+&PARTICLEMAKINGOPTION
+ MKPRTCLMINPOINT=  0.0000000000000000     ,  5.0000000000000001E-003,  0.0000000000000000     ,
+ MKPRTCLMAXPOINT= 0.12000000000000000     ,  4.0000000000000001E-002,  5.9999999999999998E-002,
+ FILL_ORDER="x","z","y",
+ DISTANCE_RATIO=  1.5000000000000000     ,
+ VELMAG=  0.0000000000000000     ,
+ POSMAG= 0.50000000000000000     ,
+ /
+
+ >> Step3: Particles are MAKING into DEMSystem ...
+   > Number of particles avaiable in the system:54
+&PRTCLVISUOPTION
+ SAVEXDMFONCE=T,
+ SAVE_ID=F,
+ SAVE_DIAMETER=F,
+ SAVE_TYPE=F,
+ SAVE_USRMARK=F,
+ SAVE_LINVEL=F,
+ SAVE_LINACC=F,
+ SAVE_THETA=F,
+ SAVE_ROTVEL=F,
+ SAVE_ROTACC=F,
+ SAVE_CNTCTFORCE=F,
+ SAVE_TORQUE=F,
+ /
+
+ >> Step4: Initializing the inter-processors communication . . .
+
+ >> Step5: Initializing contact list and contact force models . . .
+   > Contact force model is non-linear visco-elastic model with limited tangential displacement
+   > Linear   movement Integration scheme is : Adams Bashforth: 3nd Order
+   > Rotating movement Integration scheme is : Adams Bashforth: 3nd Order
+
+ >> Step6: Initializing contact search method . . .
+   > Particle-Particle contact search intialization...
+   > Particle-Wall contact search intialization...
+    ++ Contact search method is NBS Munjiza
+       + Cell size is [m]: 2.0000000000E-03
+       + Number of cells considered is (x,y,z) :[6 ,           6 ,           6]
+
+ >> Step7: Initializing timers . . .
+       + Neighbor particles of all walls are updated
+       + This process is repeated in Iteration :1
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :54
+    ++ Updated  matirx length is :56
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :56
+    ++ Updated  matirx length is :58
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :58
+    ++ Updated  matirx length is :60
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :60
+    ++ Updated  matirx length is :62
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :62
+    ++ Updated  matirx length is :64
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :64
+    ++ Updated  matirx length is :66
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :66
+    ++ Updated  matirx length is :68
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :68
+    ++ Updated  matirx length is :70
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :70
+    ++ Updated  matirx length is :72
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :72
+    ++ Updated  matirx length is :74
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :74
+    ++ Updated  matirx length is :76
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :76
+    ++ Updated  matirx length is :78
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :78
+    ++ Updated  matirx length is :80
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :80
+    ++ Updated  matirx length is :82
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :82
+    ++ Updated  matirx length is :84
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :84
+    ++ Updated  matirx length is :86
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :86
+    ++ Updated  matirx length is :88
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :88
+    ++ Updated  matirx length is :90
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :90
+    ++ Updated  matirx length is :92
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :92
+    ++ Updated  matirx length is :94
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :94
+    ++ Updated  matirx length is :96
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :96
+    ++ Updated  matirx length is :98
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :98
+    ++ Updated  matirx length is :100
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :100
+    ++ Updated  matirx length is :102
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :102
+    ++ Updated  matirx length is :104
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :104
+    ++ Updated  matirx length is :106
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :106
+    ++ Updated  matirx length is :108
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :108
+    ++ Updated  matirx length is :110
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :110
+    ++ Updated  matirx length is :112
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :112
+    ++ Updated  matirx length is :114
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :114
+    ++ Updated  matirx length is :116
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :116
+    ++ Updated  matirx length is :118
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :118
+    ++ Updated  matirx length is :120
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :120
+    ++ Updated  matirx length is :122
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :122
+    ++ Updated  matirx length is :124
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :124
+    ++ Updated  matirx length is :126
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :126
+    ++ Updated  matirx length is :128
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :128
+    ++ Updated  matirx length is :130
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :130
+    ++ Updated  matirx length is :132
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :132
+    ++ Updated  matirx length is :134
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :134
+    ++ Updated  matirx length is :136
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :136
+    ++ Updated  matirx length is :138
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :138
+    ++ Updated  matirx length is :140
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :140
+    ++ Updated  matirx length is :142
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :142
+    ++ Updated  matirx length is :144
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :144
+    ++ Updated  matirx length is :146
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :146
+    ++ Updated  matirx length is :148
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :148
+    ++ Updated  matirx length is :150
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :150
+    ++ Updated  matirx length is :152
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :152
+    ++ Updated  matirx length is :154
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :154
+    ++ Updated  matirx length is :156
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :156
+    ++ Updated  matirx length is :158
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :158
+    ++ Updated  matirx length is :160
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :160
+    ++ Updated  matirx length is :162
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :162
+    ++ Updated  matirx length is :164
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :164
+    ++ Updated  matirx length is :166
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :166
+    ++ Updated  matirx length is :168
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :168
+    ++ Updated  matirx length is :170
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :170
+    ++ Updated  matirx length is :172
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :172
+    ++ Updated  matirx length is :174
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :174
+    ++ Updated  matirx length is :176
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :176
+    ++ Updated  matirx length is :178
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :178
+    ++ Updated  matirx length is :180
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :180
+    ++ Updated  matirx length is :182
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :182
+    ++ Updated  matirx length is :184
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :184
+    ++ Updated  matirx length is :186
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :186
+    ++ Updated  matirx length is :188
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :188
+    ++ Updated  matirx length is :190
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :190
+    ++ Updated  matirx length is :192
+
+ >> A warning is reported in program
+   > A warning occur in:  NBSM_clcBoxIndex
+   > Warning message is:  Need to reallocate Box_And_Next
+    ++ The present processor  is :0
+    ++ Previous matirx length is :108
+    ++ Updated  matirx length is :247
+
+ >> DEM performed 1 iterations up to here!
+   > Execution time [tot, last, ave] [sec]: 6.7900160000E-03, 6.7900160000E-03, 6.7900160000E-03
+    ++ PreItertion time [tot, ave]        : 1.4621000000E-05, 1.4621000000E-05
+    ++ Comm_For_Contact [tot, ave]        : 6.5067110000E-03, 6.5067110000E-03
+    ++ CS and CF P-P time [tot, ave]      : 2.3795000000E-04, 2.3795000000E-04
+    ++ CS and CF P-W time [tot, ave]      : 1.9100000000E-07, 1.9100000000E-07
+    ++ Integration time [tot, ave]        : 2.3140000000E-05, 2.3140000000E-05
+    ++ Comm_For_Exchange [tot, ave]       : 5.8160000000E-06, 5.8160000000E-06
+    ++ Write to file time [tot, ave]      : 7.5900000000E-07, 7.5900000000E-07
+   > Particle number in  domain:  54
+   > Contact information
+    ++ No. consrvtv. contacts, same level | cross level: 1407 | 0
+    ++ No. exact contacts P-P | P-GP | P-FP | P-W : 53 | 70 | 0 | 0
+       + Neighbor particles of all walls are updated
+       + This process is repeated in Iteration :80
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :192
+    ++ Updated  matirx length is :194
+
+ >> A warning is reported in program
+   > A warning occur in:  reallocate_ghost_for_Cntct
+   > Warning message is:  Need to reallocate Ghost variables
+    ++ The present processor  is :0
+    ++ Previous matirx length is :194
+    ++ Updated  matirx length is :196
+
+ >> A warning is reported in program
+   > A warning occur in:  NBSM_clcBoxIndex
+   > Warning message is:  Need to reallocate Box_And_Next
+    ++ The present processor  is :0
+    ++ Previous matirx length is :247
+    ++ Updated  matirx length is :296
+
+ >> Good job! DEM finished successfully!

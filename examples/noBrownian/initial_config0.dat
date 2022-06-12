@@ -1,0 +1,7 @@
+1 1 1                    ! number of spheres IsCaseLattice==T
+2                        ! number of spheres IsCaseLattice==F
+10 10 10                 ! periodic box size
+2 5.0 5.1 1.                 ! configuration per particle x y z r
+4.5 5.0 4.9 1.
+4 0 3 1.
+2 2 3 1.
