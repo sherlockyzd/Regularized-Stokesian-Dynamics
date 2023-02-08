@@ -1,0 +1,120 @@
+ **************************************************************************
+ Log file for run: Stokes
+ **************************************************************************
+
+&DEMOPTIONS
+ RESTARTFLAG=F,
+ NUMPRTCL=         16,
+ NUMPRTCLFIX=          0,
+ DTDEM=  9.9999999999999995E-007,
+ GRAVITY%X=  0.0000000000000000     ,
+ GRAVITY%Y=  0.0000000000000000     ,
+ GRAVITY%Z=  0.0000000000000000     ,
+ MINPOINT%X=  0.0000000000000000     ,
+ MINPOINT%Y=  0.0000000000000000     ,
+ MINPOINT%Z=  0.0000000000000000     ,
+ MAXPOINT%X=  3.2239839080329388E-002,
+ MAXPOINT%Y=  3.2239839080329388E-002,
+ MAXPOINT%Z=  3.2239839080329388E-002,
+ CS_METHOD=          1,
+ CF_TYPE=          2,
+ CT_MODEL=          1,
+ PI_METHOD=          3,
+ PRI_METHOD=          3,
+ NUMPRTCL_TYPE=          1,
+ NUMWALL_TYPE=          1,
+ CS_NUMLVLS=          0,
+ CNTCTLIST_SIZE=          6,
+ BASE_WALL_ID=   10000000,
+ WALL_MAX_UPDATE_ITER=        100,
+ WALL_NEIGHBOR_RATIO=  2.0000000000000000     ,
+ RUNNAME="Stokes                                                          ",
+ RES_DIR="./DEM/Results/                                                  ",
+ RESTARTDIR="./DEM/Restart/                                                  ",
+ BACKUPFREQDEM=      20000,
+ SAVEVISUDEM=       5000,
+ CMD_LFILE_FREQ=      10000,
+ LF_FILE_LVL=          5,
+ LF_CMDW_LVL=          3,
+ GEOMETRYSOURCE=          1,
+ GEOM_DIR="DEMGeom.stl                                                     ",
+ IFIRSTDEM=          1,
+ ILASTDEM=     100000,
+ PRTCL_CS_RATIO=  1.0000000000000000     ,
+ ISPERIODIC= 3*T,
+ /
+&PARTICLEPHYSICALPROPERTY
+ BIN_DIVIDED=  1.0000000000000000     ,
+ DENSITY=  2650.0000000000000     ,
+ DIAMETER=  1.0000000000000000E-004,
+ YOUNGSMODULUS_P=  50000000.000000000     ,
+ POISSONRATIO_P= 0.29999999999999999     ,
+ FRICTIONCOE_S_PP= 0.40000000000000002     ,
+ FRICTIONCOE_K_PP= 0.40000000000000002     ,
+ FRICTIONCOE_ROLL_PP= 0.10000000000000001     ,
+ RESTITUTIONCOE_N_PP= 0.29999999999999999     ,
+ RESTITUTIONCOE_T_PP= 0.80000000000000004     ,
+ /
+
+ >> Step1: Physical properties of particels and walls are set.
+   > Physical properties contains 1 particle types and 1 wall types.
+
+ >> Step2: Geometry is set
+   > Geometry Contains 0 Plane walls.
+&PARTICLEMAKINGOPTION
+ MKPRTCLMINPOINT=  0.0000000000000000     ,  5.0000000000000001E-003,  0.0000000000000000     ,
+ MKPRTCLMAXPOINT= 0.12000000000000000     ,  4.0000000000000001E-002,  5.9999999999999998E-002,
+ FILL_ORDER="x","z","y",
+ DISTANCE_RATIO=  1.5000000000000000     ,
+ VELMAG=  0.0000000000000000     ,
+ POSMAG= 0.50000000000000000     ,
+ /
+
+ >> Step3: Particles are MAKING into DEMSystem ...
+   > Number of particles avaiable in the system:16
+&PRTCLVISUOPTION
+ SAVEXDMFONCE=T,
+ SAVE_ID=F,
+ SAVE_DIAMETER=F,
+ SAVE_TYPE=F,
+ SAVE_USRMARK=F,
+ SAVE_LINVEL=F,
+ SAVE_LINACC=F,
+ SAVE_THETA=F,
+ SAVE_ROTVEL=F,
+ SAVE_ROTACC=F,
+ SAVE_CNTCTFORCE=F,
+ SAVE_TORQUE=F,
+ /
+
+ >> Step4: Initializing the inter-processors communication . . .
+
+ >> Step5: Initializing contact list and contact force models . . .
+   > Contact force model is non-linear visco-elastic model with limited tangential displacement
+   > Linear   movement Integration scheme is : Adams Bashforth: 3nd Order
+   > Rotating movement Integration scheme is : Adams Bashforth: 3nd Order
+
+ >> Step6: Initializing contact search method . . .
+   > Particle-Particle contact search intialization...
+   > Particle-Wall contact search intialization...
+    ++ Contact search method is NBS Munjiza
+       + Cell size is [m]: 2.0000000000E-03
+       + Number of cells considered is (x,y,z) :[19 ,          19 ,          19]
+
+ >> Step7: Initializing timers . . .
+
+ >> DEM performed 1 iterations up to here!
+   > Execution time [tot, last, ave] [sec]: 4.8774003517E-05, 4.8774003517E-05, 4.8774003517E-05
+    ++ PreItertion time [tot, ave]        : 7.2500552051E-07, 7.2500552051E-07
+    ++ Comm_For_Contact [tot, ave]        : 4.0150043787E-06, 4.0150043787E-06
+    ++ CS and CF P-P time [tot, ave]      : 3.5422999645E-05, 3.5422999645E-05
+    ++ CS and CF P-W time [tot, ave]      : 1.3699172996E-07, 1.3699172996E-07
+    ++ Integration time [tot, ave]        : 4.7130015446E-06, 4.7130015446E-06
+    ++ Comm_For_Exchange [tot, ave]       : 2.9299990274E-06, 2.9299990274E-06
+    ++ Write to file time [tot, ave]      : 2.5602752106E-02, 2.8447186260E-07
+   > Particle number in  domain:  16
+   > Contact information
+    ++ No. consrvtv. contacts, same level | cross level: 1 | 0
+    ++ No. exact contacts P-P | P-GP | P-FP | P-W : 0 | 1 | 0 | 0
+
+ >> Good job! DEM finished successfully!

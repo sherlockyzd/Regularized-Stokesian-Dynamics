@@ -1,0 +1,180 @@
+<?xml version="1.0" ?>
+<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>
+<Xdmf xmlns:xi="http://www.w3.org/2001/XInclude" Version="2.0">
+<Domain>
+    <Grid Name="TimeSeries" GridType="Collection" CollectionType="Temporal">
+        <Time TimeType="List">
+            <DataItem Format="XML" NumberType="Int" Dimensions="    21">
+                    0     5000    10000    15000    20000    25000    30000    35000    40000    45000    50000    55000    60000    65000    70000    75000    80000    85000    90000    95000   100000            </DataItem>
+        </Time>
+        <Grid Name="T0000000000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000000000
+                </DataItem>
+            </Geometry>
+        </Grid>
+        <Grid Name="T0000005000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000005000
+                </DataItem>
+            </Geometry>
+        </Grid>
+        <Grid Name="T0000010000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000010000
+                </DataItem>
+            </Geometry>
+        </Grid>
+        <Grid Name="T0000015000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000015000
+                </DataItem>
+            </Geometry>
+        </Grid>
+        <Grid Name="T0000020000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000020000
+                </DataItem>
+            </Geometry>
+        </Grid>
+        <Grid Name="T0000025000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000025000
+                </DataItem>
+            </Geometry>
+        </Grid>
+        <Grid Name="T0000030000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000030000
+                </DataItem>
+            </Geometry>
+        </Grid>
+        <Grid Name="T0000035000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000035000
+                </DataItem>
+            </Geometry>
+        </Grid>
+        <Grid Name="T0000040000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000040000
+                </DataItem>
+            </Geometry>
+        </Grid>
+        <Grid Name="T0000045000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000045000
+                </DataItem>
+            </Geometry>
+        </Grid>
+        <Grid Name="T0000050000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000050000
+                </DataItem>
+            </Geometry>
+        </Grid>
+        <Grid Name="T0000055000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000055000
+                </DataItem>
+            </Geometry>
+        </Grid>
+        <Grid Name="T0000060000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000060000
+                </DataItem>
+            </Geometry>
+        </Grid>
+        <Grid Name="T0000065000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000065000
+                </DataItem>
+            </Geometry>
+        </Grid>
+        <Grid Name="T0000070000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000070000
+                </DataItem>
+            </Geometry>
+        </Grid>
+        <Grid Name="T0000075000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000075000
+                </DataItem>
+            </Geometry>
+        </Grid>
+        <Grid Name="T0000080000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000080000
+                </DataItem>
+            </Geometry>
+        </Grid>
+        <Grid Name="T0000085000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000085000
+                </DataItem>
+            </Geometry>
+        </Grid>
+        <Grid Name="T0000090000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000090000
+                </DataItem>
+            </Geometry>
+        </Grid>
+        <Grid Name="T0000095000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000095000
+                </DataItem>
+            </Geometry>
+        </Grid>
+        <Grid Name="T0000100000" GridType="Uniform">
+            <Topology TopologyType="Polyvertex" NodesPerElement="       16"/>
+            <Geometry GeometryType="XYZ">
+                <DataItem Format="Binary" DataType="Float" Precision="8" Endian="Native" Dimensions=" 3       16" Seek="              0">
+                    PartVisuForStokes0000100000
+                </DataItem>
+            </Geometry>
+        </Grid>
+    </Grid>
+</Domain>
+</Xdmf>
