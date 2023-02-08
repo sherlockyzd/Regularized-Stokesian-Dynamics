@@ -1,0 +1,104 @@
+#=======================================================================
+# Makefile example --Zhengdong Yu, 2022-01-05(yy/mm/dd)
+#=======================================================================
+CMP       =  gcc_serial#gcc_MPI#intel_MPI #intel_serial
+
+# ============================ CFD part ============================
+# Choose pre-processing options
+#   -DDOUBLE_PREC - use double-precision
+#   -DSAVE_SINGLE - Save 3D data in single-precision
+# CFD options
+
+exeName    =  ../GRPerY.exe
+
+DEMdir     = ./DEM/
+Gmresdir   = ./tools/
+CFDEdir    = ./tools/
+NBS_dir    = ./NBS/
+CFD_dir    = 
+
+DEMFS      = 
+GmresFS    = 
+CFDEDEFS   = 
+NBS_DEFS   =
+CFD_DEFS   = -fopenmp#-DmuCalculate
+
+
+CFD_inc    = 
+CFD_lib    =  -lm
+
+# CFD source files
+SrcT:= Prtcl_TypeDef.f90 Prtcl_Timer.f90 Prtcl_Parameters.f90 Prtcl_Decomp_2d.f90 Prtcl_LogInfo.f90            \
+       Prtcl_Property.f90 Prtcl_Geometry.f90 Prtcl_Variables.f90 Prtcl_CL_and_CF.f90 Prtcl_ContactSearchPW.f90 \
+       Prtcl_Integration.f90 Prtcl_Comm.f90 Prtcl_IOAndVisu.f90 Prtcl_NBS_Munjiza.f90 Prtcl_Hrchl_Munjiza.f90  \
+       Prtcl_ContactSearch.f90 Prtcl_DEMSystem.f90 DEM_gz.f90
+DEMsrc := $(addprefix $(DEMdir), ${SrcT}) 
+
+SrcT   := real_type.f90 basic_tools.f90 abstract_interfaces.f90 algebra_lin.f90 \
+          R1d_mod.f90 gmres_mod.f90 gmres_mod_gmres.f90
+Gmressrc:= $(addprefix $(Gmresdir), ${SrcT}) 
+
+SrcT   := lapblas_double_excerpts.f 
+CFDEsrc:= $(addprefix $(CFDEdir), ${SrcT}) 
+
+SrcT   := NBSPrtclTypeDef.f90 PrtclFill.f90 PrtclNBS_Munjiza.f90
+NBS_src:= $(addprefix $(NBS_dir), ${SrcT})
+
+SrcT   := mymodules.f90 matrices.f90 tensors.f90 \
+          stokesian_Green.f90 Ewald_summation.f90 Regularization.f90\
+          conglomerate.f90 initial_conf.f90 csd_post.f90 source_force.f90      \
+          GRPY_YZD.f90 per_GRPY_YZD.f90 hydro_lub.f90 \
+          Wall_interaction.f90 \
+          stepper.f90 main.f90
+CFD_src:= $(addprefix $(CFD_dir), ${SrcT})
+
+#-----------------------------------------------------------------------
+# Normally no need to change anything below
+#-----------------------------------------------------------------------
+ifeq ($(CMP),intel_MPI)
+  FortC = mpiifort
+  CFLAGS= -fpp -O3 -xSSE4.2 -axAVX,CORE-AVX-I,CORE-AVX2 -ipo -fp-model fast=2 -mcmodel=large
+else ifeq ($(CMP),intel_serial)
+  FortC = ifort
+  CFLAGS= -fpp -O3 -xSSE4.2 -axAVX,CORE-AVX-I,CORE-AVX2 -ipo -fp-model fast=2 -mcmodel=large
+else ifeq ($(CMP),gcc_MPI)
+  FortC = mpif90
+  CFLAGS= -cpp -O3 -funroll-loops -floop-optimize -g -Warray-bounds -fbacktrace -ffree-line-length-none
+else ifeq ($(CMP),gcc_serial)
+  mpiFortC = mpif90#gfortran
+  FortC = gfortran
+  CFLAGSE= -cpp -O0 -g
+  CFLAGS = -cpp -O0 -funroll-loops -floop-optimize -g -Wall -fbacktrace -ffree-line-length-none
+endif
+
+all: $(exeName)
+DEM_obj  = $(DEMsrc:%.f90=%.o)
+Gmresobj = $(Gmressrc:%.f90=%.o)
+CFDEobj  = $(CFDEsrc:%.f=%.o)
+NBS_obj  = $(NBS_src:%.f90=%.o)
+CFD_obj  = $(CFD_src:%.f90=%.o)
+$(exeName):$(DEM_obj) $(Gmresobj) $(CFDEobj) $(NBS_obj) $(CFD_obj)
+	   $(mpiFortC) $(CFD_DEFS) $(CFLAGS) -o $@ $(DEM_obj) $(Gmresobj) $(CFDEobj) $(NBS_obj) $(CFD_obj) $(CFD_lib)
+
+$(DEM_obj):$(DEMdir)%.o :$(DEMdir)%.f90
+	   $(mpiFortC) $(CFLAGS) $(DEMFS) -c $<
+	   @ mv $(@F) ${DEMdir}
+
+$(Gmresobj):$(Gmresdir)%.o :$(Gmresdir)%.f90
+	   $(FortC) $(CFLAGS) $(CFD_inc) $(GmresFS) -c $<
+	   @ mv $(@F) ${Gmresdir}
+
+$(CFDEobj):$(CFDEdir)%.o :$(CFDEdir)%.f
+	   $(FortC) $(CFLAGSE) $(CFDEDEFS) -c $<
+	   @ mv $(@F) ${CFDEdir}
+
+$(NBS_obj):$(NBS_dir)%.o :$(NBS_dir)%.f90
+	   $(mpiFortC) $(CFLAGS) $(CFD_inc) $(NBS_DEFS) -c $<
+	   @ mv $(@F) ${NBS_dir}
+
+$(CFD_obj):$(CFD_dir)%.o :$(CFD_dir)%.f90
+	   $(FortC) $(CFLAGS) $(CFD_inc) $(CFD_DEFS) -c $<
+
+.PHONY: clean
+clean:
+	rm -fr  *.o *.mod  $(DEMdir)*o $(CFD_dir)*o $(Gmresdir)*.o $(NBS_dir)*.o $(CFDEdir)*.o $(exeName)

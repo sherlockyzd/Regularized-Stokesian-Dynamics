@@ -1,0 +1,10 @@
+#!/bin/bash
+
+cd ${0%/*} || exit 1    # run from this directory
+
+rm -rf fort*
+rm -rf yeta*
+rm -rf mu*
+rm -rf SYS*
+../GRPerY.exe DEM.prm
+
