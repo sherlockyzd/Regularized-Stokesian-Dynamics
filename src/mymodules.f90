@@ -70,7 +70,8 @@
       MODULE rb_conglomerate     
       implicit none
       INTEGER K_rb
-      INTEGER,ALLOCATABLE :: KK_rbmconn(:) 
+      INTEGER,ALLOCATABLE :: KK_rbmconn(:)
+      real*8 alphaX,betaY,gamaZ 
       !LOGICAL useCongl
       END MODULE rb_conglomerate    
 !****************************************
@@ -148,7 +149,7 @@
       lambda_Renold=1.0_8
       lambda_Permittivity=1.0_8
       lambda_kB=1.0_8
-      lambda_Viscosity=1.0_8/PAI*1.0e3
+      lambda_Viscosity=1.0_8/PAI/mu_f
       lambda_velocity=1.0_8
       lambda_Length=radii_test/radii_true
 

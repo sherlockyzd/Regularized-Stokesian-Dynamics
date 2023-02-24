@@ -313,6 +313,10 @@
            else
              READ(11,*)
            endif
+           READ(11,*) alphaX,betaY,gamaZ
+           alphaX=alphaX*pai/180.0_8
+           betaY=betaY*pai/180.0_8
+           gamaZ=gamaZ*pai/180.0_8
            READ(11,*) LB
            NN=Np+Nb
            ALLOCATE( CONF(3,NN),STAT=istat )
@@ -320,6 +324,9 @@
            DO I=1,Np
              READ(11,*) T,CONF(1,I),CONF(2,I),CONF(3,I),RADII(I)
            ENDDO
+           if(K_rb.ne.0) then
+              call swim_rotate_rb(NN,CONF(:,1:Np),alphaX,betaY,gamaZ)
+           endif
          elseif(IsCaseLattice==1) then      !SC
            Np=NX*NY*NZ
            NN=Np+Nb
@@ -365,7 +372,11 @@
 
        !nl=NX+0
       if(IsCaseLattice==0) then
-         
+         do i=1,Np
+             write(*,*) CONF(:,i)
+         enddo
+
+
        elseif(IsCaseLattice==1) then      !SC
 
          conf=0.0_8

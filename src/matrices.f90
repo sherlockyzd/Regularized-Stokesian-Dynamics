@@ -454,4 +454,155 @@
       mu=matmul(matmul(transpose(RPQ),RPPINV),RPQ)-RQQ
       !mu=-RQQ
       end
+
+
+      subroutine rotateX(alpha,mat_X_rotation)
+      implicit none
+      real*8,intent(in):: alpha
+      !REAL*8,intent(in):: RPP(6*NN,6*NN),RPQ(6*NN,5*NN),RQQ(5*NN,5*NN)
+      real(8),intent(out)::mat_X_rotation(3,3)
+
+      !real*8 RPPINV(6*NN,6*NN)!,RQQTemp(5*NN,5*NN),muTemp(5,5)
+      mat_X_rotation=0.0_8
+      mat_X_rotation(1,1)=1.0_8
+      mat_X_rotation(2,2)=cos(alpha)
+      mat_X_rotation(3,3)=cos(alpha)
+      mat_X_rotation(2,3)=-sin(alpha)
+      mat_X_rotation(3,2)=sin(alpha)
+      end
+
+      subroutine rotateY(alpha,mat_Y_rotation)
+      implicit none
+      real*8,intent(in):: alpha
+      !REAL*8,intent(in):: RPP(6*NN,6*NN),RPQ(6*NN,5*NN),RQQ(5*NN,5*NN)
+      real(8),intent(out)::mat_Y_rotation(3,3)
+
+      !real*8 RPPINV(6*NN,6*NN)!,RQQTemp(5*NN,5*NN),muTemp(5,5)
+
+      mat_Y_rotation=0.0_8
+      mat_Y_rotation(2,2)=1.0_8
+      mat_Y_rotation(1,1)=cos(alpha)
+      mat_Y_rotation(3,3)=cos(alpha)
+      mat_Y_rotation(3,1)=-sin(alpha)
+      mat_Y_rotation(1,3)=sin(alpha)
+      end
+
+
+      subroutine rotateZ(alpha,mat_Z_rotation)
+      implicit none
+      real*8,intent(in):: alpha
+      !REAL*8,intent(in):: RPP(6*NN,6*NN),RPQ(6*NN,5*NN),RQQ(5*NN,5*NN)
+      real(8),intent(out)::mat_Z_rotation(3,3)
+
+      !real*8 RPPINV(6*NN,6*NN)!,RQQTemp(5*NN,5*NN),muTemp(5,5)
+
+      mat_Z_rotation=0.0_8
+      mat_Z_rotation(3,3)=1.0_8
+      mat_Z_rotation(2,2)=cos(alpha)
+      mat_Z_rotation(1,1)=cos(alpha)
+      mat_Z_rotation(1,2)=-sin(alpha)
+      mat_Z_rotation(2,1)=sin(alpha)
+      end
+
+
+      subroutine rotateXYZ(alphaX,betaY,gamaZ,mat_rotation)
+      implicit none
+      real*8,intent(in):: alphaX,betaY,gamaZ
+      !REAL*8,intent(in):: RPP(6*NN,6*NN),RPQ(6*NN,5*NN),RQQ(5*NN,5*NN)
+      real(8),intent(out)::mat_rotation(3,3)
+
+      real*8 mat_X_rotation(3,3),mat_Y_rotation(3,3),mat_Z_rotation(3,3)
+      CALL rotateX(alphaX,mat_X_rotation)
+      CALL rotateY(betaY,mat_Y_rotation)
+      CALL rotateZ(gamaZ,mat_Z_rotation)
+      mat_rotation=matmul(matmul(mat_Z_rotation,mat_Y_rotation),mat_X_rotation)
+
+      end subroutine rotateXYZ
+
+      subroutine rotate_conf(NN,CONF,alphaX,betaY,gamaZ)
+      implicit none
+      INTEGER,intent(in)::NN
+      REAL*8,intent(inout):: CONF(3,NN)
+      real*8,intent(in):: alphaX,betaY,gamaZ
+      !real(8),intent(out)::mat_rotation(3,3)
+
+      real*8 mat_rotation(3,3),CONF_new(3,NN)
+      INTEGER ii
+
+      CONF_new=0.0_8
+
+      CALL rotateXYZ(alphaX,betaY,gamaZ,mat_rotation)
+      do ii=1,NN
+        CONF_new(:,ii)=matmul(mat_rotation,CONF(:,ii))
+      enddo
+
+      CONF=CONF_new
+      end subroutine rotate_conf
+
+
+        subroutine swim_rotate_rb(NN,CONF,alphaX,betaY,gamaZ)
+        use rb_conglomerate,only:K_rb 
+        implicit none
+        INTEGER,intent(in)::NN
+        REAL*8,intent(inout):: CONF(3,NN)
+        real*8,intent(in):: alphaX,betaY,gamaZ
+
+        real*8 CONF_rb(3,K_rb),CONF_rb_NN(3,NN),CONF_origin_NN(3,NN)!,mat_rotation(3,3)
+
+        !INTEGER KK_rb,num_rb_sum,num_rb,ii
+
+        CALL swim_conf_rb(NN,CONF,CONF_rb)
+        CALL swim_conf_rb_NN(NN,CONF_rb,CONF_rb_NN)
+        CONF_origin_NN=CONF-CONF_rb_NN
+        CALL rotate_conf(NN,CONF_origin_NN,alphaX,betaY,gamaZ)
+        CONF=CONF_origin_NN+CONF_rb_NN
+        
+        end subroutine swim_rotate_rb
+
+
+
+        subroutine swim_conf_rb(NN,CONF,CONF_rb)
+        use rb_conglomerate  
+        implicit none
+        INTEGER,intent(in)::NN
+        REAL*8,intent(in):: CONF(3,NN)
+        real*8,intent(out):: CONF_rb(3,K_rb)
+
+        INTEGER KK_rb,num_rb_sum,num_rb,ii
+
+        CONF_rb=0.0_8          
+        num_rb_sum=0
+        do  KK_rb=1,K_rb
+            num_rb=KK_rbmconn(KK_rb)
+            do ii = num_rb_sum+1, num_rb_sum+num_rb
+                CONF_rb( 1:3,KK_rb ) = CONF_rb( 1:3,KK_rb ) + CONF(1:3,ii)
+            end do
+          CONF_rb( 1:3,KK_rb ) = CONF_rb( 1:3,KK_rb )/ num_rb
+          num_rb_sum=num_rb_sum+num_rb
+        enddo
+        end subroutine swim_conf_rb
+
+
+        subroutine swim_conf_rb_NN(NN,CONF_rb,CONF_rb_NN)
+        use rb_conglomerate  
+        implicit none
+        INTEGER,intent(in)::NN
+        REAL*8,intent(in):: CONF_rb(3,K_rb)
+        real*8,intent(out):: CONF_rb_NN(3,NN)
+
+        INTEGER KK_rb,num_rb_sum,num_rb,ii
+
+        CONF_rb_NN=0.0_8
+
+        num_rb_sum=0
+        do  KK_rb=1,K_rb
+            num_rb=KK_rbmconn(KK_rb)
+            do ii = num_rb_sum+1, num_rb_sum+num_rb
+                CONF_rb_NN(1:3,ii)= CONF_rb( 1:3,KK_rb ) 
+            end do
+            !CONF_rb( 1:3,KK_rb ) = CONF_rb( 1:3,KK_rb )/ num_rb
+            num_rb_sum=num_rb_sum+num_rb
+        enddo
+
+        end subroutine swim_conf_rb_NN
 !**********************************************

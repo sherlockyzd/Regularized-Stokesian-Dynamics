@@ -103,7 +103,7 @@
         !if(T.gt.0.0_8.and.useDEMstepper) then
         if(useDEMstepper) then
             call INIT_uo_bg(conf,uo_bg)
-            U_par=0.0_8
+            U_par=0.0_8 !angular velocity
             U_par(1:3*NN)=U_pos-uo_bg(1:3*NN)!-u_brown
             call STEPPER_UDEM(radii,APP,APQ,AQQ,rfu,rfe,rse,Fe,EIN,RPP,U_par,u_brown,SijN_hyd&
                & ,Fe_inter,SijN_FP,CONF,SijN_B)
@@ -211,6 +211,15 @@
          Ftotal = Fe+matmul(RPQ,EIN)-matmul(RPP,U_add)
         else
          Ftotal = Fe-matmul(RPP,U_add)
+        endif
+
+
+        if(K_rb.ne.0)then
+           call new_Ftotal(NN,CONF,RADII,Ftotal)
+           write(*,*) 'Ftotal_swimmer_____swimmer_____swimmer_____swimmer_____okok'
+           !do i=1,NN-Nb
+            !write(*,*) 'Ftotal(i)===',i,Ftotal(6*(i-1)+1),Ftotal(6*(i-1)+1),Ftotal(6*(i-1)+2),Ftotal(6*(i-1)+3)
+           !enddo
         endif
         
        

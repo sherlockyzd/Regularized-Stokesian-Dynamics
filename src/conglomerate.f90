@@ -12,11 +12,55 @@
    IMPLICIT NONE
    private
 
-   public:: new_vel,swim_uo_bg!,swim_rbmconn,
+   public:: new_vel,swim_uo_bg,new_Ftotal!,swim_rbmconn,
 
    contains
 
 !****************************************************************
+    subroutine new_Ftotal(NN,CONF,RADII,Ftotal)
+    IMPLICIT NONE
+    INTEGER,intent(in)::NN
+    REAL*8,intent(in):: CONF(3,NN),RADII(NN)!,rfu(6*NN,6*NN),rfe(6*NN,5*NN),fext(6*NN),einf(5*NN) 
+    real*8,intent(inout):: Ftotal(6*NN)
+
+    integer :: ii, jj, jj2, kk, ll, mm,num_rb
+    !integer ::n6,n5!, idostep
+    !real*8, dimension( 3 ) :: swimcm
+    real*8, dimension( 6*NN, 6*K_rb ) :: rbmconn
+    real*8, dimension( 3*K_rb, 3*K_rb ) :: rbmconn_Inertial
+    real*8, dimension( 6*K_rb ) :: swimhold1,swimhold2
+    real*8, dimension( 6*K_rb,6*K_rb ) :: mass_inverse_matrix
+    !real*8, dimension( 6*K_rb ) :: uswim, fswim
+    !real*8, dimension( 5*NN ) :: einf
+    !real*8, dimension( 6*NN ) :: fconst,uext,udiff,ugate, fgate
+    !real*8, dimension( 3, 3 ) :: ee, xf
+    !real*8 :: omega_gate
+    mass_inverse_matrix=0.0_8
+
+    do ii=1,K_rb  
+        num_rb=KK_rbmconn(ii)
+        jj=3*(ii-1)
+        mass_inverse_matrix(jj+1,jj+1)=1.0_8/num_rb
+        mass_inverse_matrix(jj+2,jj+2)=1.0_8/num_rb
+        mass_inverse_matrix(jj+3,jj+3)=1.0_8/num_rb
+    enddo
+
+    CALL swim_rbmconn_Inertial(NN,CONF,RADII,rbmconn_Inertial)
+    CALL MATREV(rbmconn_Inertial,3*K_rb)
+    mass_inverse_matrix(3*K_rb+1:6*K_rb,3*K_rb+1:6*K_rb)=rbmconn_Inertial
+
+    CALL swim_rbmconn(NN,CONF,rbmconn)
+    
+    swimhold1=matmul(transpose(rbmconn),Ftotal)
+    swimhold2=matmul(mass_inverse_matrix,swimhold1)
+
+    Ftotal=matmul(rbmconn,swimhold2)
+
+
+    end subroutine new_Ftotal
+
+
+
 
     subroutine new_vel(NN,CONF,rfu,rfe,fext,einf,u)
     ! ------------------------------------------------------------ !
@@ -96,13 +140,13 @@
         ! Calculate the propulsive thrust due to an implicit gate
         !call dgemv( 'n', n6, n5, 1.d0, rfe, n6, einf, 1, 0.d0, uext, 1 )
         ! Add in any external forces(6*NN,1)
-         !if(FTS_method)then
-          ! uext=matmul(rfe,einf)
-          !else
+        if(FTS_method)then
+           uext=matmul(rfe,einf)
+        else
            uext = 0.d0
-          !endif
+        endif
 
-        uext( : ) =  fext( : ) +uext( : )+fgate( : )
+        uext( : ) =  uext( : )+ fext( : ) +fgate( : )
         ! Compute Sigma * u and store in fswim(6,1)
         !call dgemv( 't', n6, 6, 1.d0, rbmconn, n6, uext, 1, 0.d0, fswim, 1 )
         !fswim( : ) = 0.d0
@@ -115,11 +159,11 @@
         !call dgemv( 't', n6, 6, 1.d0, rbmconn, n6, uswim, 1, 0.d0, udiff, 1 )
         !udiff(:) = 0.d0
         udiff=matmul(rbmconn,uswim)
-        u(:)=udiff( : ) !+ ugate( : )
+        u(:)=udiff( : ) + ugate( : )
     !******************************************************************************!
     end subroutine new_vel
 
-     subroutine swim_uo_bg(NN,CONF,uo_bg)
+        subroutine swim_uo_bg(NN,CONF,uo_bg)
         ! ------------------------------------------------------------ !
         ! This routine computes the contributions to the particle
         ! velocities due to a swimming gait and an external force/torque.
@@ -136,26 +180,20 @@
 
           real*8 rbmconn(6*NN, 6*K_rb)
           real*8 uo_rb_bg(6*K_rb),CONF_rb(3,K_rb)
-          INTEGER KK_rb,num_rb_sum,num_rb,ii
+          !INTEGER KK_rb,num_rb_sum,num_rb,ii
 
-          CALL swim_rbmconn(NN,CONF,rbmconn)
-          CONF_rb=0.0_8
-          uo_rb_bg=0.0_8
-          num_rb_sum=0
-            do  KK_rb=1,K_rb
-                num_rb=KK_rbmconn(KK_rb)
-                do ii = num_rb_sum+1, num_rb_sum+num_rb
-                    CONF_rb( 1:3,KK_rb ) = CONF_rb( 1:3,KK_rb ) + CONF(1:3,ii)
-                end do
-                CONF_rb( 1:3,KK_rb ) = CONF_rb( 1:3,KK_rb )/ num_rb
-                num_rb_sum=num_rb_sum+num_rb
-            enddo
-            call calc_uo_bg(K_rb,CONF_rb,uo_rb_bg)
+          
+          CALL swim_conf_rb(NN,CONF,CONF_rb)
 
-            uo_bg=matmul(rbmconn,uo_rb_bg)
+         !uo_rb_bg=0.0_8
+         call calc_uo_bg(K_rb,CONF_rb,uo_rb_bg)
+
+         CALL swim_rbmconn(NN,CONF,rbmconn)
+         
+         uo_bg=matmul(rbmconn,uo_rb_bg)
 
 
-     end subroutine swim_uo_bg
+         end subroutine swim_uo_bg
 
 
     subroutine swim_rbmconn(NN,CONF,rbmconn)
@@ -235,7 +273,96 @@
 
     end subroutine swim_rbmconn
 
+    subroutine swim_rbmconn_Inertial(NN,CONF,RADII,rbmconn_Inertial)
+    ! ------------------------------------------------------------ !
+    ! This routine computes the contributions to the particle
+    ! velocities due to a swimming gait and an external force/torque.
+    !
+    ! Inputs: none
+    ! Outputs: none
+    ! Changes: u - the velocities due to the swimming gait 
+    !          sh - the hydrodynamic contribution to the stresslet
+    ! ------------------------------------------------------------ !
+      IMPLICIT NONE
+      INTEGER,intent(in)::NN
+      REAL*8,intent(in):: CONF(3,NN),RADII(NN)
+      real*8,intent(out):: rbmconn_Inertial(3*K_rb, 3*K_rb)
+
+      integer :: ii, jj, KK_rb
+      integer ::num_rb_sum,num_rb
+      real*8, dimension( 3 ) :: swimcm
+      real*8 :: dx, dy, dz, Ixx, Ixy,Ixz,Iyy,Iyz,Izz,RADII2
+
+        ! Find the center of mass of each swimmer
+        rbmconn_Inertial( :, : ) = 0.d0
+        num_rb_sum=0
+        do  KK_rb=1,K_rb
+            
+            num_rb=KK_rbmconn(KK_rb)
+            Ixx=0.0_8
+            Ixy=0.0_8
+            Ixz=0.0_8
+            Iyy=0.0_8
+            Iyz=0.0_8
+            Izz=0.0_8 
+            
+            swimcm( : ) = 0.d0
+
+            do ii = num_rb_sum+1, num_rb_sum+num_rb
+                swimcm( 1:3 ) = swimcm( 1:3 ) + conf(1:3,ii)
+            end do
+            swimcm = swimcm / num_rb
+         
+            ! Assemble the rigid body motion connectivity tensor (Sigma)  
+                do ii = num_rb_sum+1, num_rb_sum+num_rb  
+                    dx = conf( 1,ii ) - swimcm( 1 )
+                    dy = conf( 2,ii ) - swimcm( 2 )
+                    dz = conf( 3,ii ) - swimcm( 3 )
+                    RADII2=0.4_8*RADII(ii)*RADII(ii)
+                    Ixx=Ixx+dy*dy+dz*dz+RADII2
+                    Iyy=Iyy+dx*dx+dz*dz+RADII2
+                    Izz=Izz+dx*dx+dy*dy+RADII2
+                    Ixy=Ixy-dx*dy
+                    Ixz=Ixz-dx*dz
+                    Iyz=Iyz-dy*dz
+                end do
+                jj=3*(KK_rb-1)
+                rbmconn_Inertial( jj +1, jj +1 ) =Ixx 
+                rbmconn_Inertial( jj +2, jj +2 ) =Iyy
+                rbmconn_Inertial( jj +3, jj +3 ) =Izz 
+                rbmconn_Inertial( jj +1, jj +2 ) =Ixy
+                rbmconn_Inertial( jj +2, jj +1 ) =Ixy  
+                rbmconn_Inertial( jj +1, jj +3 ) =Ixz
+                rbmconn_Inertial( jj +3, jj +1 ) =Ixz
+                rbmconn_Inertial( jj +2, jj +3 ) =Iyz
+                rbmconn_Inertial( jj +3, jj +2 ) =Iyz
+
+            num_rb_sum=num_rb_sum+num_rb    
+        end do
+
+        ! Sigma^T = rbmconn(6*NN,6)
+        ! Calculate rfu_swim ( Sigma * RFU * Sigma^T)-->(6,6)
+
+        !call dgemm( 'n', 'n', n6, 6, n6, 1.d0, rfu, n6, rbmconn, &
+        !    n6, 0.d0, swimhold, n6 )
+        !swimhold=matmul(rfu,rbmconn)
+        !call dgemm( 't', 'n', 6, 6, n6, 1.d0, &
+        !    rbmconn, n6, swimhold, n6, 0.d0, rfu_swim, 6 )
+        !rfu_swim=matmul(transpose(rbmconn),matmul(rfu,rbmconn))
+
+        ! Invert rfu_swim(6,6)
+        
+
+    end subroutine swim_rbmconn_Inertial
  
+
+
+
+
+
+
+
+
 
 
     subroutine lub_drag_cor(dR,q)
