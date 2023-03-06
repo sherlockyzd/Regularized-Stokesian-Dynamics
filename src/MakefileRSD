@@ -46,7 +46,7 @@ NBS_src:= $(addprefix $(NBS_dir), ${SrcT})
 
 SrcT   := mymodules.f90 matrices.f90 tensors.f90 \
           stokesian_Green.f90 Ewald_summation.f90 Regularization.f90\
-          conglomerate.f90 initial_conf.f90 csd_post.f90 source_force.f90      \
+          csd_post.f90 conglomerate.f90 initial_conf.f90 source_force.f90      \
           GRPY_YZD.f90 per_GRPY_YZD.f90 hydro_lub.f90 \
           Wall_interaction.f90 \
           stepper.f90 main.f90

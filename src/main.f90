@@ -18,7 +18,8 @@
   use Mobilitymatrix 
   use tensors,only:pai2
   USE OMP_LIB
-  use rb_conglomerate 
+  use rb_conglomerate
+  use conglomerate,only:rbmconn_Init
 
 
   implicit none
@@ -67,20 +68,22 @@
   endif
   
   CALL INITIAL_SIZE(T)
-  ALLOCATE(U_pos(3*NN),STAT=status) 
+  ALLOCATE(U_pos(6*NN),STAT=status) 
   ALLOCATE(SijN(5*NN),STAT=status)
-
+  U_pos=0.0_8
   CALL INITIAL_CONF()
+
+  if(K_rb.ne.0)then
+    ALLOCATE (conf_rb(3,K_rb) ,STAT=status)
+    ALLOCATE (conf_rb_vector(3,Np) ,STAT=status)
+    ALLOCATE (U_par_rb(6*K_rb) ,STAT=status)
+    ALLOCATE (q_rb(K_rb) ,STAT=status)
+    ALLOCATE (rbmconn_Inertial_body(3*K_rb,3*K_rb) ,STAT=status)
+    ALLOCATE (rbmconn_Inertial_body_inverse(3*K_rb,3*K_rb) ,STAT=status)
+    CALL rbmconn_Init(NN,CONF,RADII,U_pos,conf_rb,U_par_rb,q_rb)
+  endif
   call VMD_WRITE_BDY(CONF,T,RADII)
    
-
-
- 
-  
-
-
-
-    
     K_time=0
 
     ALLOCATE(grmobmxsave(6*NN,6*NN),STAT=status) 
@@ -140,7 +143,7 @@
     close(50)
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!important!!!!!
-    U_pos=0.0_8
+    
 
     Time: DO
 
@@ -155,24 +158,26 @@
       !u_bg(1)=-GAMMA*0.5_8*LB(3)
       !endif
 
-     
-      CALL INIT_u_bg()
-      !if(BROWN) then
-        CALL STEPPER_Stokesian(CONF,RADII,DT,T,yeta_mu,U_pos,SijN)
-      !else
-
-
       IF (mod(K_time,K_WRITE) .eq. 0) then
-        write(20,"(12ES24.15)") T/lambda_time,yeta_mu(:),LB(1),frequency,GAMMA,GAMMAangle
-      ENDIF
-
-      IF (mod(K_time,K_WRITE) .eq. 0) then
-        CALL VMD_WRITE(CONF,T/lambda_time,RADII,U_pos,SijN)
+        CALL VMD_WRITE(CONF,T/lambda_time,RADII,U_pos)
         if(Nfloc_sum.eq.NN) then
           write(*,*)'Floc all complete'
           stop
         endif
       ENDIF
+
+      CALL INIT_u_bg()
+      !if(BROWN) then
+        CALL STEPPER_Stokesian(CONF,RADII,DT,T,yeta_mu,U_pos,SijN)
+      !else
+
+      write(*,*) "rigid5==================================="
+
+      IF (mod(K_time,K_WRITE) .eq. 0) then
+        write(20,"(12ES24.15)") T/lambda_time,yeta_mu(:),LB(1),frequency,GAMMA,GAMMAangle
+      ENDIF
+
+
 
       K_time=K_time+1
       T=T+DT
@@ -203,14 +208,19 @@
   if(allocated(RADII)) DEALLOCATE( RADII)
   if(allocated(RADIIBDY)) DEALLOCATE( RADIIBDY)
   if(allocated(U_pos)) DEALLOCATE( U_pos)
-  
-  if(allocated(Floc_index)) DEALLOCATE(Floc_index)
-  
+  if(allocated(Floc_index)) DEALLOCATE(Floc_index) 
+  if(allocated(KK_rbmconn)) DEALLOCATE(KK_rbmconn)
+  if(allocated(conf_rb_vector))  DEALLOCATE( conf_rb_vector)
+  if(allocated(U_par_rb)) DEALLOCATE(U_par_rb)
+  if(allocated(q_rb)) DEALLOCATE( q_rb)  
+  if(allocated(rbmconn_Inertial_body)) DEALLOCATE( rbmconn_Inertial_body)
+  if(allocated(rbmconn_Inertial_body_inverse)) DEALLOCATE( rbmconn_Inertial_body_inverse)
+  if(allocated(conf_rb))  DEALLOCATE( conf_rb)
 
   enddo LB_size
  
   CALL END_VMD_WRITE()
-  if(allocated(KK_rbmconn)) DEALLOCATE(KK_rbmconn)
+
   if(allocated(LB0_list)) DEALLOCATE(LB0_list)
   call toc()
   ompend=omp_get_wtime()

@@ -123,7 +123,7 @@
       use tensors,only:pai2,pai
       use CONFIG,only:Floc_index
       IMPLICIT NONE
-      real*8,intent(in)::RADII(NN),CONF(3,NN),U_pos(3*NN)
+      real*8,intent(in)::RADII(NN),CONF(3,NN),U_pos(6*NN)
       real*8,intent(out)::ppiclf_F(3,NN)
 
       INTEGER I,J
@@ -241,7 +241,7 @@
       use size,only:NN,Nb
       use method,only:usecollision,wall_method,useDLVO,usebond
       IMPLICIT NONE
-      real*8,intent(in)::RADII(NN),conf(3,NN),U_pos(3*NN)
+      real*8,intent(in)::RADII(NN),conf(3,NN),U_pos(6*NN)
       real*8,intent(out)::Fe(6*NN)!,SijN_FP(5*NN)
 
       real*8 collision_F(3,NN),ppiclf_F_wall(3,NN),F_DLVO(3,NN),bond_F(3,NN)
@@ -324,7 +324,7 @@
       use SYS_property,only:ksp,erest,pho_par
       use tensors,only:pai2,pai
       IMPLICIT NONE
-      real*8,intent(in)::RADII(NN),CONF(3,NN),U_pos(3*NN)
+      real*8,intent(in)::RADII(NN),CONF(3,NN),U_pos(6*NN)
       real*8,intent(out)::ppiclf_F(3,NN)
 
       INTEGER I

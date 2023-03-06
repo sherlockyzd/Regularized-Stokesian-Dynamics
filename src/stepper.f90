@@ -14,7 +14,7 @@
   use BROWN_proerty
   use Mobilitymatrix ,only:Brownsave
   use conglomerate
-  use rb_conglomerate
+  use rb_conglomerate,only:K_rb,conf_rb,U_par_rb,q_rb
   implicit none
   private
 
@@ -25,7 +25,7 @@
 
       SUBROUTINE STEPPER_Stokesian(CONF,RADII,DT,T,yeta_mu,U_pos,SijN)    ! RETURNS NEW T=T+DT
       IMPLICIT NONE
-      REAL*8,intent(inout):: CONF(3,NN),U_pos(3*NN)
+      REAL*8,intent(inout):: CONF(3,NN),U_pos(6*NN)
       REAL*8,intent(in):: RADII(NN),DT,T
       real(8),intent(out):: yeta_mu(5),SijN(5*NN)
 
@@ -33,7 +33,7 @@
       REAL*8 APP(6*NN,6*NN),APQ(6*NN,5*NN),AQQ(5*NN,5*NN)
       REAL*8 RPP(6*NN,6*NN),SijN_hyd(5*NN),SijN_FP(5*NN),SijN_B(5*NN)!,,SijN(5*NN)
       REAL*8 LATTICE(3,3),EWS_ERR,Fe_inter(6*NN),Fe_body(6*NN),Fe(6*NN)
-      REAL*8 uo_bg(6*NN),U_par(6*NN),u_brown(3*NN)
+      REAL*8 uo_bg(6*NN),U_relative(6*NN),u_brown(3*NN)
       real*8 rfu(6*NN,6*NN),rfe(6*NN,5*NN),rse(5*NN,5*NN)
       real*8 A(3*NN,3*NN),Z(3*NN),VB(3*NN),DMDX(3*NN),V_DM(3*NN)
       logical pos_collision
@@ -103,30 +103,35 @@
         !if(T.gt.0.0_8.and.useDEMstepper) then
         if(useDEMstepper) then
             call INIT_uo_bg(conf,uo_bg)
-            U_par=0.0_8 !angular velocity
-            U_par(1:3*NN)=U_pos-uo_bg(1:3*NN)!-u_brown
-            call STEPPER_UDEM(radii,APP,APQ,AQQ,rfu,rfe,rse,Fe,EIN,RPP,U_par,u_brown,SijN_hyd&
+            U_relative=0.0_8 !angular velocity
+            U_relative=U_pos-uo_bg!-u_brown
+             write(*,*) "rigid0==================================="
+            call STEPPER_UDEM(radii,APP,APQ,AQQ,rfu,rfe,rse,Fe,EIN,RPP,U_relative,U_pos,u_brown,SijN_hyd&
                & ,Fe_inter,SijN_FP,CONF,SijN_B)
             write(*,*) "Using STEPPER_UDEM"
+             write(*,*) "rigid1==================================="
         else
           if(useGMRESmethod) then
-            call STEPPER_Gmres(APP,APQ,AQQ,rfu,rfe,rse,Fe,EIN,U_par,SijN_hyd)
+            call STEPPER_Gmres(APP,APQ,AQQ,rfu,rfe,rse,Fe,EIN,U_relative,SijN_hyd)
             write(*,*) "Using STEPPER_Gmres"
           else
-            call STEPPER_NOGmres(APP,APQ,AQQ,rfu,rfe,rse,Fe,EIN,RPP,U_par,u_brown,SijN_hyd &
+            call STEPPER_NOGmres(APP,APQ,AQQ,rfu,rfe,rse,Fe,EIN,RPP,U_relative,u_brown,SijN_hyd &
                & ,Fe_inter,SijN_FP,CONF,SijN_B)
             write(*,*) "Using STEPPER_NOGmres"
           endif
         endif
 
-        CALL STEPPER_conf(conf,radii,U_par,U_pos,T)
+          write(*,*) "rigid2==================================="
+        CALL STEPPER_conf(conf,radii,U_relative,U_pos,T)
+         write(*,*) "rigid4==================================="
+
 
       enddo NT_DEMdo
 
       
       !SijN=SijN_FP+SijN_hyd
       !SijN_FP=0.0_8
-      call yetamu_solve(APP,RPP,Fe,U_Par,RADII,SijN_hyd,SijN_FP,SijN_B,EIN,yeta_mu)
+      call yetamu_solve(APP,RPP,Fe,U_relative,RADII,SijN_hyd,SijN_FP,SijN_B,EIN,yeta_mu)
 
 
       END SUBROUTINE STEPPER_Stokesian
@@ -134,30 +139,28 @@
 !***********************************************************
 
       SUBROUTINE STEPPER_conf(conf,radii,U_par,U_pos,T)
-      REAL*8,intent(inout):: CONF(3,NN)
+      REAL*8,intent(inout):: CONF(3,NN),U_pos(6*NN)
       REAL*8,intent(in)::U_par(6*NN),radii(NN),T
-      REAL*8,intent(out):: U_pos(3*NN)
+      !REAL*8,intent(inout):: 
    
       REAL*8 DCONF_1(3*NN),uo_bg(6*NN)
       INTEGER I,J
 
-      call INIT_uo_bg(conf,uo_bg)
-     
-      !do I=1,6*NN
-      !write(*,*) uo_bg(I)
-      !enddo
 
-      U_pos=U_par(1:3*NN)+uo_bg(1:3*NN)
+      if(K_rb.ne.0) then
+        call new_conf_swim(NN,conf,T,U_par_rb,conf_rb,q_rb)
+        !call new_q_rb_swim(NN,conf,U_pos,T,U_par_rb,conf_rb,q_rb)
+      else
+        call INIT_uo_bg(conf,uo_bg)
+        U_pos=U_par+uo_bg
+        !call par_index_floc(CONF,radii)
+        !call U_BDY_CORR(U_pos)
+        if(.not.fix) then
+          DCONF_1=DT_DEM*U_pos(1:3*NN)
 
-      !call par_index_floc(CONF,radii)
-      !call U_BDY_CORR(U_pos)
-      if(.not.fix) then
-        DCONF_1=DT_DEM*U_pos
-
-        forall(i=1:NN-Nb,j=1:3)
-          CONF(j,i)=CONF(j,i)+DCONF_1(3*(i-1)+j)
-        end forall
-
+          forall(i=1:NN-Nb,j=1:3)
+            CONF(j,i)=CONF(j,i)+DCONF_1(3*(i-1)+j)
+          end forall
           if(simplePeriod) then
              DO I = 1, Np
               CALL PERIOD_CORRECTION(CONF(:,I),LB,T)
@@ -166,29 +169,31 @@
              !if(K_rb.ne.0)then
              !   call  swim_uo_bg(NN,CONF,uo_bg)
              !endif
-             U_pos=U_par(1:3*NN)+uo_bg(1:3*NN)
+             U_pos=U_par+uo_bg
           endif
+        endif
 
         
+
        ! call par_index_floc(CONF,radii)
        ! call U_BDY_CORR(U_pos)
       endif
 
       END SUBROUTINE STEPPER_conf
 
-      SUBROUTINE STEPPER_UDEM(radii,APP,APQ,AQQ,rfu,rfe,rse,Fe,EIN,RPP,U_par,u_brown,SijN_hyd,Fe_inter,SijN_FP,CONF,SijN_B)
+      SUBROUTINE STEPPER_UDEM(radii,APP,APQ,AQQ,rfu,rfe,rse,Fe,EIN,RPP,U_par,U_pos,u_brown,SijN_hyd,Fe_inter,SijN_FP,CONF,SijN_B)
       IMPLICIT NONE
       !REAL*8,intent(inout):: CONF(3,NN)
       REAL*8,intent(in):: APP(6*NN,6*NN),APQ(6*NN,5*NN),AQQ(5*NN,5*NN)
       REAL*8,intent(in):: rfu(6*NN,6*NN),rfe(6*NN,5*NN),rse(5*NN,5*NN)
       real*8,intent(in):: EIN(5*NN),Fe(6*NN),radii(NN),u_brown(3*NN),Fe_inter(6*NN),CONF(3,NN)
-      real(8),intent(inout):: U_par(6*NN)
+      real(8),intent(inout):: U_par(6*NN),U_pos(6*NN)
       real(8),intent(out):: SijN_hyd(5*NN),SijN_FP(5*NN),SijN_B(5*NN),RPP(6*NN,6*NN)
 
       REAL*8 RPQ(6*NN,5*NN),RQQ(5*NN,5*NN),UB(6*NN)
       REAL*8 RPP0(6*NN,6*NN),RPQ0(6*NN,5*NN),RQQ0(5*NN,5*NN)
       real*8 mu(5*NN,5*NN),APPR(6*NN,6*NN),U_add(6*NN)
-      REAL*8 DU_1(3*NN),uo_bg(6*NN),Ftotal(6*NN),mass
+      REAL*8 DU_1(6*NN),uo_bg(6*NN),Ftotal(6*NN)!,mass
 
       integer I,J
 
@@ -205,7 +210,7 @@
         endif
         call arrangResist(NN,rfu,rfe,rse,RPP0,RPQ0,RQQ0,RPP,RPQ,RQQ)
 
-        U_add=U_Par
+        U_add=U_par
         U_add(1:3*NN)=U_add(1:3*NN)-u_brown
         if(FTS_method)then
          Ftotal = Fe+matmul(RPQ,EIN)-matmul(RPP,U_add)
@@ -215,23 +220,26 @@
 
 
         if(K_rb.ne.0)then
-           call new_Ftotal(NN,CONF,RADII,Ftotal)
-           write(*,*) 'Ftotal_swimmer_____swimmer_____swimmer_____swimmer_____okok'
+           call new_U_par_rb(NN,CONF,RADII,Ftotal,U_pos,U_par_rb,q_rb)
+           write(*,*) 'U_par_swimmer_____swimmer_____swimmer_____swimmer_____okok'
            !do i=1,NN-Nb
             !write(*,*) 'Ftotal(i)===',i,Ftotal(6*(i-1)+1),Ftotal(6*(i-1)+1),Ftotal(6*(i-1)+2),Ftotal(6*(i-1)+3)
            !enddo
+        else
+            U_par=U_par+Ftotal*DT_DEM/mass_par
         endif
         
        
-        do i=1,NN-Nb
-          mass = pho_par*4.0_8/3.0_8*pai*RADII(i)**3
-          do j=1,3 
-            DU_1(3*(i-1)+j)=Ftotal(3*(i-1)+j)*DT_DEM/mass
-          enddo
-        enddo
+        !do i=1,NN-Nb
+         ! mass = pho_par*4.0_8/3.0_8*pai*RADII(i)**3
+         ! do j=1,3 
+            !DU_1=Ftotal*DT_DEM/mass_par
+           ! DU_1(3*NN+3*(i-1)+j)=Ftotal(3*NN+3*(i-1)+j)*DT_DEM/mass
+          !enddo
+        !enddo
 
         !forall(i=1:NN-Nb,j=1:3)
-          U_par(1:3*NN)=U_par(1:3*NN)+DU_1
+          
         !end forall
 
         call arrangement(RPP,RPQ,RQQ,mu,NN)
@@ -253,7 +261,7 @@
 
       REAL*8 RPQ(6*NN,5*NN),RQQ(5*NN,5*NN),UB(6*NN)
       REAL*8 RPP0(6*NN,6*NN),RPQ0(6*NN,5*NN),RQQ0(5*NN,5*NN)
-      real*8 mu(5*NN,5*NN),APPR(6*NN,6*NN)!,rbmconn(6*NN, 6*K_rb),rfu_swim( 6*K_rb, 6*K_rb )
+      real*8 mu(5*NN,5*NN),APPR(6*NN,6*NN),uo_bg_rb(6*K_rb)!,rbmconn(6*NN, 6*K_rb),rfu_swim( 6*K_rb, 6*K_rb )
       INTEGER I,J
 
         RPQ=0.0_8
@@ -271,7 +279,9 @@
         call arrangResist(NN,rfu,rfe,rse,RPP0,RPQ0,RQQ0,RPP,RPQ,RQQ)
 
         if(K_rb.ne.0)then
-           call new_vel(NN,CONF,RPP,RPQ,Fe,EIN,U_par)
+           call new_vel(NN,CONF,RPP,RPQ,Fe,EIN,U_par,U_par_rb,q_rb)
+           call calc_uo_bg(K_rb,conf_rb,uo_bg_rb)
+           U_par_rb=U_par_rb+uo_bg_rb
            !write(*,*) 'swimmer_____swimmer_____swimmer_____swimmer_____okok'
            !write(*,*) 'K_rb===',K_rb  
         else

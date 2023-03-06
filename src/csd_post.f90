@@ -248,7 +248,7 @@
   use SYS_property
   !use Brown
   use rb_conglomerate
-  use conglomerate,only:swim_uo_bg 
+  !use conglomerate,only:swim_uo_bg 
   use tensors,only:pai,pai2,EPS
   USE CONFIG,only:u_bg,omega_bg,omegaT,Eij,EI_bg,floc_index    ! CONF,POLY_LEN
   use period_bdy_tools,only:PER_SKEW_CORRECTION
@@ -257,7 +257,7 @@
 
 
     public::conf_overlap_correction,yetamu_solve,Init_frequency, &
-      & ppiclf_collision_timestep,INIT_u_bg, &
+      & ppiclf_collision_timestep,INIT_u_bg,calc_uo_bg, &
       & INIT_uo_bg,U_BDY_CORR,pos_collision_judge,par_index_floc
 
   contains
@@ -484,11 +484,11 @@
       real*8,intent(in)::CONF(3,NN)
       real*8,intent(out)::uo_bg(6*NN)
 
-        if(K_rb.ne.0)then
-          call  swim_uo_bg(NN,CONF,uo_bg)
-        else
+        !if(K_rb.ne.0)then
+        !  call  swim_uo_bg(NN,CONF,uo_bg)
+        !else
           call  calc_uo_bg(NN,conf,uo_bg)
-        endif
+        !endif
 
       end SUBROUTINE INIT_uo_bg
 

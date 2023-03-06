@@ -1,8 +1,18 @@
-! Procedures here are most computationally costly.
-! For better performance it is advised to replace them with parallel
-! implementations.
 
+    SUBROUTINE CrossProduct3D (X,Y,Z) 
+    IMPLICIT NONE
 
+      REAL(8),INTENT(IN)  :: X(3), Y(3)
+      REAL(8),INTENT(OUT) :: Z(3)
+      Z=0.0_8
+      Z(1) = X(2)*Y(3)-X(3)*Y(2)
+      Z(2) = X(3)*Y(1)-X(1)*Y(3)
+      Z(3) = X(1)*Y(2)-X(2)*Y(1)
+      RETURN
+    END SUBROUTINE CrossProduct3D
+  
+
+    
 !  lapack based matrix inversion
 
       SUBROUTINE MATREV(A,NN)
@@ -541,18 +551,18 @@
 
 
         subroutine swim_rotate_rb(NN,CONF,alphaX,betaY,gamaZ)
-        use rb_conglomerate,only:K_rb 
+        use rb_conglomerate,only:K_rb!,CONF_rb
         implicit none
         INTEGER,intent(in)::NN
         REAL*8,intent(inout):: CONF(3,NN)
         real*8,intent(in):: alphaX,betaY,gamaZ
 
-        real*8 CONF_rb(3,K_rb),CONF_rb_NN(3,NN),CONF_origin_NN(3,NN)!,mat_rotation(3,3)
+        real*8 CONF_rb0(3,K_rb),CONF_rb_NN(3,NN),CONF_origin_NN(3,NN)!,mat_rotation(3,3),
 
         !INTEGER KK_rb,num_rb_sum,num_rb,ii
 
-        CALL swim_conf_rb(NN,CONF,CONF_rb)
-        CALL swim_conf_rb_NN(NN,CONF_rb,CONF_rb_NN)
+        CALL swim_conf_rb(NN,CONF,CONF_rb0)
+        CALL swim_conf_rb_NN(NN,CONF_rb0,CONF_rb_NN)
         CONF_origin_NN=CONF-CONF_rb_NN
         CALL rotate_conf(NN,CONF_origin_NN,alphaX,betaY,gamaZ)
         CONF=CONF_origin_NN+CONF_rb_NN
@@ -561,33 +571,14 @@
 
 
 
-        subroutine swim_conf_rb(NN,CONF,CONF_rb)
-        use rb_conglomerate  
+
+
+
+        subroutine swim_conf_rb_NN(NN,CONF_rb0,CONF_rb_NN)
+        use rb_conglomerate,only:K_rb,KK_rbmconn
         implicit none
         INTEGER,intent(in)::NN
-        REAL*8,intent(in):: CONF(3,NN)
-        real*8,intent(out):: CONF_rb(3,K_rb)
-
-        INTEGER KK_rb,num_rb_sum,num_rb,ii
-
-        CONF_rb=0.0_8          
-        num_rb_sum=0
-        do  KK_rb=1,K_rb
-            num_rb=KK_rbmconn(KK_rb)
-            do ii = num_rb_sum+1, num_rb_sum+num_rb
-                CONF_rb( 1:3,KK_rb ) = CONF_rb( 1:3,KK_rb ) + CONF(1:3,ii)
-            end do
-          CONF_rb( 1:3,KK_rb ) = CONF_rb( 1:3,KK_rb )/ num_rb
-          num_rb_sum=num_rb_sum+num_rb
-        enddo
-        end subroutine swim_conf_rb
-
-
-        subroutine swim_conf_rb_NN(NN,CONF_rb,CONF_rb_NN)
-        use rb_conglomerate  
-        implicit none
-        INTEGER,intent(in)::NN
-        REAL*8,intent(in):: CONF_rb(3,K_rb)
+        REAL*8,intent(in):: CONF_rb0(3,K_rb)
         real*8,intent(out):: CONF_rb_NN(3,NN)
 
         INTEGER KK_rb,num_rb_sum,num_rb,ii
@@ -598,11 +589,36 @@
         do  KK_rb=1,K_rb
             num_rb=KK_rbmconn(KK_rb)
             do ii = num_rb_sum+1, num_rb_sum+num_rb
-                CONF_rb_NN(1:3,ii)= CONF_rb( 1:3,KK_rb ) 
+                CONF_rb_NN(1:3,ii)= CONF_rb0( 1:3,KK_rb ) 
             end do
             !CONF_rb( 1:3,KK_rb ) = CONF_rb( 1:3,KK_rb )/ num_rb
             num_rb_sum=num_rb_sum+num_rb
         enddo
 
         end subroutine swim_conf_rb_NN
+
+        subroutine swim_conf_rb(NN,CONF,CONF_rb0)
+        use rb_conglomerate,only:K_rb,KK_rbmconn
+        implicit none
+        INTEGER,intent(in)::NN
+        REAL*8,intent(in):: CONF(3,NN)
+        real*8,intent(out):: CONF_rb0(3,K_rb)
+
+        INTEGER KK_rb,num_rb_sum,num_rb,ii
+
+        CONF_rb0=0.0_8          
+        num_rb_sum=0
+        do  KK_rb=1,K_rb
+            num_rb=KK_rbmconn(KK_rb)
+            do ii = num_rb_sum+1, num_rb_sum+num_rb
+                CONF_rb0( 1:3,KK_rb ) = CONF_rb0( 1:3,KK_rb ) + CONF(1:3,ii)
+            end do
+          CONF_rb0( 1:3,KK_rb ) = CONF_rb0( 1:3,KK_rb )/ num_rb
+          num_rb_sum=num_rb_sum+num_rb
+        enddo
+        end subroutine swim_conf_rb
 !**********************************************
+
+#ifdef swim111
+
+#endif

@@ -164,9 +164,9 @@
 
 ! VTF file for vmd reader timestep write
 
-      SUBROUTINE VMD_WRITE(CONF,T,RADII,U_pos,SijN)
+      SUBROUTINE VMD_WRITE(CONF,T,RADII,U_pos)
       IMPLICIT NONE
-      REAL(8),intent(in):: CONF(3,NN),T,RADII(NN),U_pos(3*NN),SijN(5*NN)
+      REAL(8),intent(in):: CONF(3,NN),T,RADII(NN),U_pos(6*NN)!,SijN(5*NN)
       INTEGER I
       DO I = 1, NN-Nb
        write(31,"(13ES24.15)")T,CONF(:,I),RADII(I),U_pos(3*(I-1)+1), &
@@ -307,7 +307,7 @@
              if(sum(KK_rbmconn(:)).eq.Np) then
                write(*,*) 'KK_rbmconn',KK_rbmconn(:) 
               else
-               write(*,*) 'KK_rbmconn',KK_rbmconn(:) 
+               write(*,*) 'error--------KK_rbmconn',KK_rbmconn(:) 
                stop
              endif
            else
