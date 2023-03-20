@@ -240,13 +240,16 @@
       !use SYS_property,only:gravity
       use size,only:NN,Nb
       use method,only:usecollision,wall_method,useDLVO,usebond
+      use filament,only:F_rb
+      use filament_math,only:InternalForcesAndTorques
       IMPLICIT NONE
       real*8,intent(in)::RADII(NN),conf(3,NN),U_pos(6*NN)
       real*8,intent(out)::Fe(6*NN)!,SijN_FP(5*NN)
 
       real*8 collision_F(3,NN),ppiclf_F_wall(3,NN),F_DLVO(3,NN),bond_F(3,NN)
       real*8 F(3*NN),F_rep(3*NN)!,g
-      integer i,j
+      real*8 Filament_internal_force_torque(6*NN)
+      integer i,j,ii
 
 
       Fe=0.0_8
@@ -257,22 +260,23 @@
  
 
       F=0.0_8
-      ppiclf_F_wall=0.0_8
-      collision_F=0.0_8
+
       !SijN_FP=0.0_8
       if(usecollision)then
-        call ppiclf_collision(conf,RADII,U_pos,collision_F)
-        !call JKR_collision(conf,RADII,collision_F)
-      if(usebond)then  
-        call FENE_bond(conf,RADII,bond_F)
-      endif
-        if(wall_method) then
-          call ppiclf_collision_wall(conf,RADII,U_pos,ppiclf_F_wall)
-        endif
+          ppiclf_F_wall=0.0_8
+          collision_F=0.0_8
+          call ppiclf_collision(conf,RADII,U_pos,collision_F)
+          !call JKR_collision(conf,RADII,collision_F)
+          if(usebond)then  
+            call FENE_bond(conf,RADII,bond_F)
+          endif
+          if(wall_method) then
+            call ppiclf_collision_wall(conf,RADII,U_pos,ppiclf_F_wall)
+          endif
 
-        forall(i=1:NN-Nb,j=1:3)
-           F(3*(i-1)+j)=ppiclf_F_wall(j,i)+collision_F(j,i)+bond_F(j,i)
-        end forall
+          forall(i=1:NN-Nb,j=1:3)
+             F(3*(i-1)+j)=ppiclf_F_wall(j,i)+collision_F(j,i)+bond_F(j,i)
+          end forall
       endif
       
       F_DLVO=0.0_8
@@ -285,8 +289,16 @@
       endif
 
       !call repulsiveforce(NN,conf,radii,F_rep)
-      
+
       Fe(1:3*NN)=Fe(1:3*NN)+F !+F_rep!
+      do ii=1,NN
+          write(*,*) 'i,internal_Fe_torque===',ii,Fe(3*NN+3*(ii-1)+1:3*NN+3*ii)
+              !write(*,*) 'i, torue===',ii,Ftotal(3*NN+3*(ii-1)+1:3*NN+3*ii)
+      enddo  
+      if (F_rb.ne.0)then
+        call InternalForcesAndTorques(NN,conf,Filament_internal_force_torque)            
+        Fe=Fe+Filament_internal_force_torque
+      endif
 
 
       end  SUBROUTINE source_inter_F

@@ -15,6 +15,8 @@
   use Mobilitymatrix ,only:Brownsave
   use conglomerate
   use rb_conglomerate,only:K_rb,conf_rb,U_par_rb,q_rb
+  use filament
+  use filament_math
   implicit none
   private
 
@@ -86,12 +88,12 @@
 
 
       NT_DEMdo:do Nt=1,NT_DEM
-        !call source_inter_F(conf,RADII,U_pos,Fe_inter)
+        call source_inter_F(conf,RADII,U_pos,Fe_inter)
         call source_body_F(conf,RADII,Fe_body)
         !do I=1,NN
         !  write(*,*) Fe_body(3*(I-1)+1:3*I)
         !enddo
-        Fe=Fe_body!+Fe_inter
+        Fe=Fe_body + Fe_inter
         rfu=0.0_8
         rfe=0.0_8
         rse=0.0_8
@@ -99,17 +101,21 @@
          call lubmxcalc(NN,conf,rfu,rfe,rse)
         endif
 
+        do i=1,NN-Nb
+            write(*,*) 'i,FeFtotal===',i,Fe(3*(i-1)+1:3*i)
+            write(*,*) 'i,Fetorue====',i,Fe(3*NN+3*(i-1)+1:3*NN+3*i)
+        enddo
 
         !if(T.gt.0.0_8.and.useDEMstepper) then
         if(useDEMstepper) then
             call INIT_uo_bg(conf,uo_bg)
             U_relative=0.0_8 !angular velocity
             U_relative=U_pos-uo_bg!-u_brown
-             write(*,*) "rigid0==================================="
+            
             call STEPPER_UDEM(radii,APP,APQ,AQQ,rfu,rfe,rse,Fe,EIN,RPP,U_relative,U_pos,u_brown,SijN_hyd&
                & ,Fe_inter,SijN_FP,CONF,SijN_B)
             write(*,*) "Using STEPPER_UDEM"
-             write(*,*) "rigid1==================================="
+             
         else
           if(useGMRESmethod) then
             call STEPPER_Gmres(APP,APQ,AQQ,rfu,rfe,rse,Fe,EIN,U_relative,SijN_hyd)
@@ -121,9 +127,9 @@
           endif
         endif
 
-          write(*,*) "rigid2==================================="
+          
         CALL STEPPER_conf(conf,radii,U_relative,U_pos,T)
-         write(*,*) "rigid4==================================="
+         
 
 
       enddo NT_DEMdo
@@ -149,7 +155,11 @@
 
       if(K_rb.ne.0) then
         call new_conf_swim(NN,conf,T,U_par_rb,conf_rb,q_rb)
-        !call new_q_rb_swim(NN,conf,U_pos,T,U_par_rb,conf_rb,q_rb)
+        write(*,*) 'new_conf_rb_rb_rb____okok'
+      elseif(F_rb.ne.0) then
+
+        call new_conf_filament(NN,conf,T,U_pos)
+        write(*,*) 'new_conf_filament_____filament_____filament_____okok'
       else
         call INIT_uo_bg(conf,uo_bg)
         U_pos=U_par+uo_bg
@@ -183,14 +193,14 @@
 
       SUBROUTINE STEPPER_UDEM(radii,APP,APQ,AQQ,rfu,rfe,rse,Fe,EIN,RPP,U_par,U_pos,u_brown,SijN_hyd,Fe_inter,SijN_FP,CONF,SijN_B)
       IMPLICIT NONE
-      !REAL*8,intent(inout):: CONF(3,NN)
+      !REAL*8,intent(in):: CONF(3,NN)
       REAL*8,intent(in):: APP(6*NN,6*NN),APQ(6*NN,5*NN),AQQ(5*NN,5*NN)
       REAL*8,intent(in):: rfu(6*NN,6*NN),rfe(6*NN,5*NN),rse(5*NN,5*NN)
       real*8,intent(in):: EIN(5*NN),Fe(6*NN),radii(NN),u_brown(3*NN),Fe_inter(6*NN),CONF(3,NN)
       real(8),intent(inout):: U_par(6*NN),U_pos(6*NN)
       real(8),intent(out):: SijN_hyd(5*NN),SijN_FP(5*NN),SijN_B(5*NN),RPP(6*NN,6*NN)
 
-      REAL*8 RPQ(6*NN,5*NN),RQQ(5*NN,5*NN),UB(6*NN)
+      REAL*8 RPQ(6*NN,5*NN),RQQ(5*NN,5*NN),UB(6*NN),Fh(6*NN)
       REAL*8 RPP0(6*NN,6*NN),RPQ0(6*NN,5*NN),RQQ0(5*NN,5*NN)
       real*8 mu(5*NN,5*NN),APPR(6*NN,6*NN),U_add(6*NN)
       REAL*8 DU_1(6*NN),uo_bg(6*NN),Ftotal(6*NN)!,mass
@@ -210,14 +220,20 @@
         endif
         call arrangResist(NN,rfu,rfe,rse,RPP0,RPQ0,RQQ0,RPP,RPQ,RQQ)
 
+        
+
         U_add=U_par
         U_add(1:3*NN)=U_add(1:3*NN)-u_brown
         if(FTS_method)then
-         Ftotal = Fe+matmul(RPQ,EIN)-matmul(RPP,U_add)
+         Fh = matmul(RPQ,EIN)-matmul(RPP,U_add)
         else
-         Ftotal = Fe-matmul(RPP,U_add)
+         Fh = -matmul(RPP,U_add)
         endif
-
+        do i=1,NN-Nb
+            write(*,*) 'i,Fhtotal===',i,Fh(3*(i-1)+1:3*i)
+            write(*,*) 'i,htorue ===',i,Fh(3*NN+3*(i-1)+1:3*NN+3*i)
+        enddo
+        Ftotal = Fe+Fh
 
         if(K_rb.ne.0)then
            call new_U_par_rb(NN,CONF,RADII,Ftotal,U_pos,U_par_rb,q_rb)
@@ -225,6 +241,22 @@
            !do i=1,NN-Nb
             !write(*,*) 'Ftotal(i)===',i,Ftotal(6*(i-1)+1),Ftotal(6*(i-1)+1),Ftotal(6*(i-1)+2),Ftotal(6*(i-1)+3)
            !enddo
+        elseif(F_rb.ne.0) then
+
+
+        do i=1,NN-Nb
+            write(*,*) 'i,Ftotal===',i,Ftotal(3*(i-1)+1:3*i)
+            write(*,*) 'i, torue===',i,Ftotal(3*NN+3*(i-1)+1:3*NN+3*i)
+        enddo
+           call new_U1_filament(NN,RADII,Ftotal,U_pos)
+            do i=1,NN-Nb
+                write(*,*) 'i,U_posnew===',i,U_pos(3*(i-1)+1:3*i)
+            enddo
+            do i=1,NN-Nb
+                write(*,*) 'i,omega_posnew===',i,U_pos(3*NN+3*(i-1)+1:3*NN+3*i)
+            enddo
+            !stop
+              write(*,*) 'U_par_filament_____filament_____filament_____okok'
         else
             U_par=U_par+Ftotal*DT_DEM/mass_par
         endif

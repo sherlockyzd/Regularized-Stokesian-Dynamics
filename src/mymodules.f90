@@ -25,6 +25,7 @@
       INTEGER, ALLOCATABLE :: Floc_index(:)
       REAL*8 W,u_bg(3),omega_bg(3),omegaT(3,3),Eij(3,3),EI_bg(6),radii_test,radii_true
       INTEGER POLY_LEN
+      real*8 alphaX,betaY,gamaZ 
       END MODULE CONFIG
 
 !*************************************************
@@ -64,7 +65,8 @@
 !****************************************
       MODULE SIZE       
       implicit none
-      INTEGER NN,Nb,Np,NX,NY,NZ,Nfloc,Nfloc_sum,Nsuspen_sum
+      INTEGER NN,Nb,Np,NX,NY,NZ,Nfilament,Nswimer
+      INTEGER Nfloc,Nfloc_sum,Nsuspen_sum
       END MODULE SIZE 
 !****************************************
       module prutil     !precision and utils
@@ -81,7 +83,7 @@
       implicit none
       !save
       REAL*8 ksp,erest,pho_par,t_collision,DT_DEM,F_adh,b0,hp0,heq
-      REAL*8 pho_f,Re_number,mu_f,mass_par,gravity,Poisson_ratio,Youngs_module,g_gravity
+      REAL*8 pho_f,Re_number,mu_f,mass_par,gravity,Poisson_ratio,Youngs_module,Shear_module,g_gravity
       real*8 :: GAMMA,GAMMA_alpha,frequency  
       integer::Nt_DEM
       END MODULE SYS_property
@@ -147,7 +149,13 @@
       module procedure qscal
     end interface 
 
+    interface operator(/)
+      module procedure qdivision
+    end interface 
+
     contains
+
+
 
     function quat(r, i, j, k) result(q)
 
@@ -242,6 +250,14 @@
 
     end function qnorm
 
+    subroutine qprint(q)
+
+      implicit none
+      type(quaternion) :: q
+
+      write(*,*) "quaternion and norm:",q%r, q%i, q%j, q%k,qnorm(q)
+        
+    end subroutine qprint
 
     function qnorm2(x) result(res)
 
@@ -278,6 +294,67 @@
 
     end function qmul
 
+    function dqsub(q1, q0) result(dq)
+
+      implicit none
+      type(quaternion), intent(in) :: q1, q0
+      type(quaternion) :: dq
+
+      dq=qmul(q1,qconj(q0)) 
+
+    end function dqsub
+
+    function qequal(q1,q0) result(YN)
+    implicit none
+    type(quaternion), intent(in) :: q1, q0
+    type(quaternion) :: dq
+    real*8:: q_norm
+    logical:: YN
+    dq=q1-q0
+    q_norm=qnorm(dq)
+    YN=q_norm.lt.1e-6
+    end function qequal
+
+
+    function qangle(q1,q0) result(angle)
+    implicit none
+    type(quaternion), intent(in) :: q1, q0
+    type(quaternion) :: dq0,dq
+    real*8:: angle(3),coshalfsita,sinhalfsita(3),nn(3),halfsita
+
+    dq0=dqsub(q1, q0)
+    !call qprint(dq0)
+    if(qequal(q1,q0))then
+      angle=0.0_8
+    else
+      dq=qscal(1.0_8/qnorm(dq0) , dq0)
+      coshalfsita=dq%r
+      halfsita=acos(coshalfsita)
+      sinhalfsita(1)=dq%i;sinhalfsita(2)=dq%j;sinhalfsita(3)=dq%k;
+      nn=sinhalfsita/sqrt(sum(sinhalfsita**2))
+      angle=2.0*halfsita*nn
+      write(*,*) 'angle=',angle(:)
+    endif
+    end function qangle
+
+
+    function qdivision(x, a) result(q)
+
+      implicit none
+      type(quaternion), intent(in) :: x
+      double precision, intent(in) :: a
+      type(quaternion) :: q
+
+      q%r = x%r / a
+      q%i = x%i / a
+      q%j = x%j / a
+      q%k = x%k / a
+
+    end function qdivision
+
+
+
+
     function qderivat(q, w) result(dq)
 
       implicit none
@@ -291,12 +368,91 @@
 
     end function qderivat
 
-    function quat2mat(q)   result(R)
+
+    function qMidpoint(q1, q2) result(qmid)
+
+      implicit none
+      type(quaternion), intent(in) :: q1,q2
+      !double precision, intent(in) :: w(3)
+      type(quaternion) :: q_conj,q_rot,q_sqrt,qmid!,q_norm
+      q_conj=qconj(q1)
+      q_rot=qmul(q2,q_conj)
+      q_sqrt=qsqrt(q_rot)
+      qmid=qmul(q_sqrt,q1)
+
+    end function qMidpoint
+
+    function qsqrt(q) result(q_sqrt)
+      implicit none
+      type(quaternion), intent(in) :: q
+      double precision :: s,w(3),s1,w1(3)
+      type(quaternion) :: q_sqrt
+      s=q%r;w(1)=q%i;w(2)= q%j; w(3) = q%k;
+      if(s.lt.-0.99999) then
+         q_sqrt=quat(0.0_8,0.0_8,0.0_8,1.0_8)
+      else
+         s1=sqrt((s+1.0_8)*0.5_8)
+         w1=w/(s1*2.0_8)
+         q_sqrt=quat(s1,w1(1),w1(2),w1(3))
+      endif
+    end function qsqrt
+
+
+
+    function qrot(q,v0)   result(v)
     implicit none
     type(quaternion), intent(in) :: q
-    double precision :: R(3,3),s,vx,vy,vz
+    real*8, intent(in)::v0(3)
+    !real*8, intent(out)::
+    real*8 :: R(3,3),s,vx,vy,vz,v(3)
     type(quaternion) :: q_norm
     q_norm=qscal(1.0_8/qnorm(q) , q)
+    R=quat2rotmat(q_norm)
+    v=matmul(R,v0)
+
+    end function qrot
+
+    function qrot_inverse(q,v0)   result(v)
+    implicit none
+    type(quaternion), intent(in) :: q
+    real*8, intent(in)::v0(3)
+    !real*8, intent(out)::
+    real*8 :: R(3,3),s,vx,vy,vz,v(3)
+    type(quaternion) :: q_norm
+    q_norm=qscal(1.0_8/qnorm(q) , q)
+    R=transpose(quat2rotmat(q_norm))
+    v=matmul(R,v0)
+
+    end function qrot_inverse
+
+    function quat2rotmat(q_norm)   result(R)
+    implicit none
+    type(quaternion), intent(in) :: q_norm
+    
+    !real*8, intent(out)::
+    real*8 :: R(3,3),s,vx,vy,vz!,v(3)
+    !type(quaternion) :: q_norm
+    !q_norm=qscal(1.0_8/qnorm(q) , q)
+    s = q_norm%r; vx = q_norm%i; vy = q_norm%j; vz = q_norm%k;
+    R(1,1) = 1.0_8 - 2.0_8*vy**2 - 2.0_8*vz**2
+    R(1,2) = 2.0_8*vx*vy - 2.0_8*s*vz
+    R(1,3) = 2.0_8*vx*vz + 2.0_8*s*vy
+    R(2,1) = 2.0_8*vx*vy + 2.0_8*s*vz
+    R(2,2) = 1.0_8 - 2.0_8*vx**2 - 2.0_8*vz**2
+    R(2,3) = 2.0_8 *vy*vz - 2.0_8 *s*vx
+    R(3,1) = 2.0_8 *vx*vz - 2.0_8 *s*vy
+    R(3,2) = 2.0_8 *vy*vz + 2.0_8 *s*vx
+    R(3,3) = 1.0_8  - 2.0_8 *vx**2 - 2.0_8 *vy**2
+    end function quat2rotmat
+
+    function quat2rotmatinverse(q_norm)   result(R)
+    implicit none
+    type(quaternion), intent(in) :: q_norm
+    
+    !real*8, intent(out)::
+    real*8 :: R(3,3),s,vx,vy,vz!,v(3)
+    !type(quaternion) :: q_norm
+    !q_norm=qscal(1.0_8/qnorm(q) , q)
     s = q_norm%r; vx = q_norm%i; vy = q_norm%j; vz = q_norm%k;
     R(1,1) = 1.0_8 - 2.0_8*vy**2 - 2.0_8*vz**2
     R(1,2) = 2.0_8*vx*vy + 2.0_8*s*vz
@@ -307,7 +463,9 @@
     R(3,1) = 2.0_8 *vx*vz + 2.0_8 *s*vy
     R(3,2) = 2.0_8 *vy*vz - 2.0_8 *s*vx
     R(3,3) = 1.0_8  - 2.0_8 *vx**2 - 2.0_8 *vy**2
-    end function quat2mat
+    end function quat2rotmatinverse
+
+
 
     subroutine qsetzero(q)
 
@@ -336,17 +494,81 @@
     end subroutine qset
 
 
-    subroutine qprint(q)
+    function CrossProduct3D (X,Y) result(Z)
+    IMPLICIT NONE
+      REAL(8),INTENT(IN)  :: X(3), Y(3)
+      REAL(8) :: Z(3)
+      Z=0.0_8
+      Z(1) = X(2)*Y(3)-X(3)*Y(2)
+      Z(2) = X(3)*Y(1)-X(1)*Y(3)
+      Z(3) = X(1)*Y(2)-X(2)*Y(1)
+    END function CrossProduct3D
 
-      implicit none
-      type(quaternion) :: q
+    function Mat_Cross(P) result(P_m)
+    IMPLICIT NONE
+      REAL(8),INTENT(IN)  :: P(3)! Y(3)
+      REAL(8) :: P_m(3,3)
+      P_m=0.0_8
+      P_m(1,2) = -P(3)
+      P_m(1,3) =  P(2)
+      P_m(2,1) =  P(3)
+      P_m(2,3) =  -P(1)
+      P_m(3,1) =  -P(2)
+      P_m(3,2) =  P(1)
+    END function Mat_Cross
 
-      write(*,*) "quaternion and norm:",q%r, q%i, q%j, q%k,qnorm(q)
-        
-    end subroutine qprint
+    function Mat_inv_Cross(P) result(P_m)
+    IMPLICIT NONE
+      REAL(8),INTENT(IN)  :: P(3)! Y(3)
+      REAL(8) :: P_m(3,3)
+      P_m=transpose(Mat_Cross(P))
 
-    end module quaternions
+    END function Mat_inv_Cross
+
+
+
+    function Lie_algebra_update(u,q0)  result(q1)
+    type(quaternion), intent(in) :: q0
+    real*8,intent(in)::u(3)
+
+    type(quaternion) :: q1,qu
+    !real*8, intent(out)::
+    real*8 :: ucos,usin,unorm
+    unorm=sqrt(sum(u**2))
+    ucos=cos(unorm*0.5_8)
+    usin=sin(unorm*0.5_8)/unorm
+    qu%r=ucos
+    qu%i=usin*u(1);qu%j=usin*u(2);qu%k=usin*u(3)
+    q1=qu*q0
+    end function Lie_algebra_update
+
+
+    function dexpu_inv(u,w) result(dexpu)
+    real*8, intent(in) :: u(3),w(3)
+    real*8::dexpu(3)
+
+    !type(quaternion) :: q1,qu
+    !real*8, intent(out)::
+    real*8 :: ucot,uscalar,unorm,uw(3)
+
+    unorm=sqrt(sum(u**2))
+    ucot=unorm/tan(unorm*0.5_8)-2.0_8
+    uscalar=0.5*ucot/(unorm*unorm)
+    uw(:)= CrossProduct3D(u,CrossProduct3D(u,w))
+    dexpu=w-0.5*CrossProduct3D(u,w)-uscalar*uw
+    end function dexpu_inv
+
+
+
+
+
+    end module quaternions  
+
+
+
+
 !****************************************************************
+
       MODULE rb_conglomerate
       use quaternions     
       implicit none
@@ -355,9 +577,27 @@
       REAL*8, ALLOCATABLE :: conf_rb(:,:),conf_rb_vector(:,:),U_par_rb(:)
       REAL*8, ALLOCATABLE ::rbmconn_Inertial_body(:,:),rbmconn_Inertial_body_inverse(:,:)
       type(quaternion), ALLOCATABLE:: q_rb(:)
-      real*8 alphaX,betaY,gamaZ 
       !LOGICAL useCongl
       END MODULE rb_conglomerate   
+
+
+!****************************************************************
+      MODULE filament
+      use quaternions     
+      implicit none
+      INTEGER F_rb
+      INTEGER,ALLOCATABLE :: Filament_num(:),index1(:),Filament_conf_past(:,:)
+      REAL*8, ALLOCATABLE :: Filament_tau_base(:,:),Filament_tau_now(:,:),Filament_tau_next(:,:)
+      REAL*8, ALLOCATABLE :: Filament_U1_now(:),Filament_X1_next(:),Filament_X1_now(:),Filament_X1_past(:)
+      REAL*8, ALLOCATABLE :: Filament_Inertial_lambda(:),Filament_Inertial_torque(:)
+      REAL*8, ALLOCATABLE :: Filament_Lie_algebra_now(:),Filament_Lie_algebra_next(:)
+      type(quaternion), ALLOCATABLE:: Filament_q(:)
+      REAL*8 ::Filament_Inertial_body_inverse(3,3),Filament_Inertial_body(3,3)
+      REAL*8 ::GI,EI,GA,EA
+      
+      !real*8 alphaX,betaY,gamaZ 
+      !LOGICAL useCongl
+      END MODULE filament   
 !****************************************************************
   module dimentionless
   use SYS_property
@@ -367,6 +607,7 @@
   use CONFIG,only:radii_true,radii_test
   use TENSORS,only:PAI,pai2
   use control,only: END_TIME,BASE_DT,T0,dt_dem0,NtDEM
+  use filament,only:GI,EI,GA,EA
   implicit none
   private
 
@@ -429,6 +670,7 @@
       AH=AH*lambda_AH
 
       Youngs_module=Youngs_module*lambda_Elasticmodulu
+      Shear_module=Youngs_module/(2.0_8*(1.0_8+Poisson_ratio))
       Surfaceenergy=Surfaceenergy*lambda_Surfaceenergy
       F_adh=1.50_8*PAI*Surfaceenergy*1.0_8
       b0=((9.0_8*PAI*Surfaceenergy*1.0_8*1.0_8*(1.0_8-Poisson_ratio*Poisson_ratio)) &
@@ -437,6 +679,11 @@
       heq=hp0-(1.1_8)**(-3.0_8/5.0_8)*b0*b0/1.0_8
       kBT=kBT*lambda_kB*lambda_temperature
       k_LJ=30.0_8*kBT/1.0_8/1.0_8
+
+      GA=pai*Shear_module
+      EA=pai*Youngs_module
+      GI=0.25*Shear_module
+      EI=0.25*Youngs_module
       !kB=kB*lambda_kB
 
 

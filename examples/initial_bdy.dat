@@ -1,4 +1,4 @@
-15                        ! number of spheres IsCaseLattice==F
+0                        ! number of spheres IsCaseLattice==F
 1.00 1.0 1.0 1.0
 3.02 1.0 1.0 1.0
 5.04 1.0 1.0 1.0

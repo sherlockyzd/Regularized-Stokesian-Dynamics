@@ -56,6 +56,14 @@
 
       call conf_rb2conf(NN,conf_rb,conf,q_rb)
 
+      if(simplePeriod) then
+         DO ii = 1, NN
+          CALL PERIOD_CORRECTION(conf(:,ii),LB,T)
+         ENDDO
+      endif
+
+
+
       do ii=1,K_rb
         jj=3*K_rb+3*(ii-1)
         w=U_par_rb(jj+1:jj+3)
@@ -67,7 +75,7 @@
         CALL qprint(q_rb(ii))
       enddo
       
-        write(*,*) "rigid3==================================="
+
     end subroutine new_conf_swim
 
 
@@ -86,7 +94,7 @@
     num_rb_sum=0
     do  KK_rb=1,K_rb
         num_rb=KK_rbmconn(KK_rb)
-        swimcm_rotation=quat2mat(q_rb(KK_rb))
+        swimcm_rotation=quat2rotmat(q_rb(KK_rb))
        ! do jj=1,3
        ! write(*,*) "KK_rb and swimcm_rotation(jj,:)",KK_rb,jj,swimcm_rotation(jj,:)
        ! enddo
@@ -150,7 +158,7 @@
         CALL qprint(q_rb(ii))
       enddo
       
-        write(*,*) "rigid3==================================="
+
     end subroutine new_q_rb_swim
 
 
@@ -175,7 +183,6 @@
     real*8, dimension( 6*K_rb,6*K_rb ) :: mass_inverse_matrix
     real*8, dimension( 3*K_rb ) :: rbmconn_torque
 
-
     mass_inverse_matrix=0.0_8
     do ii=1,K_rb  
         num_rb=KK_rbmconn(ii)
@@ -196,6 +203,7 @@
     Ftotal_rb=matmul(mass_inverse_matrix,swimhold_Ftotal)
 
     U_par_rb=U_par_rb+Ftotal_rb*DT_DEM/mass_par
+
     U_pos=matmul(rbmconn,U_par_rb)
 
 
@@ -335,7 +343,7 @@
         num_rb_sum=0
         do  KK_rb=1,K_rb
             num_rb=KK_rbmconn(KK_rb)
-            swimcm_rotation=quat2mat(q_rb(KK_rb))
+            swimcm_rotation=quat2rotmat(q_rb(KK_rb))
             do ii = num_rb_sum+1, num_rb_sum+num_rb     
                 swimcm( : ) = matmul(swimcm_rotation,conf_rb_vector(:,ii))               
                 dx1 = swimcm( 1 )
@@ -346,12 +354,12 @@
                     rbmconn( jj+kk,      3*(KK_rb-1)+kk ) = 1.d0
                     rbmconn( 3*NN+jj+kk, 3*(K_rb+KK_rb-1)+kk ) = 1.d0
                 end do
-                rbmconn( jj +1, 3*(K_rb+KK_rb-1) + 2 ) = -dx3
-                rbmconn( jj +1, 3*(K_rb+KK_rb-1) + 3 ) = dx2
-                rbmconn( jj +2, 3*(K_rb+KK_rb-1) + 1 ) = dx3
-                rbmconn( jj +2, 3*(K_rb+KK_rb-1) + 3 ) = -dx1
-                rbmconn( jj +3, 3*(K_rb+KK_rb-1) + 1 ) = -dx2
-                rbmconn( jj +3, 3*(K_rb+KK_rb-1) + 2 ) = dx1
+                rbmconn( jj +1, 3*(K_rb+KK_rb-1) + 2 ) = dx3
+                rbmconn( jj +1, 3*(K_rb+KK_rb-1) + 3 ) = -dx2
+                rbmconn( jj +2, 3*(K_rb+KK_rb-1) + 1 ) = -dx3
+                rbmconn( jj +2, 3*(K_rb+KK_rb-1) + 3 ) = dx1
+                rbmconn( jj +3, 3*(K_rb+KK_rb-1) + 1 ) = dx2
+                rbmconn( jj +3, 3*(K_rb+KK_rb-1) + 2 ) = -dx1
             end do  
             num_rb_sum=num_rb_sum+num_rb    
         end do
@@ -397,7 +405,7 @@
         rbmconn_Inertial( :, : ) = 0.d0
         rbmconn_Inertial_inverse( :, : ) = 0.d0
         do  KK_rb=1,K_rb
-            swimcm_rotation=quat2mat(q_rb(KK_rb))
+            swimcm_rotation=quat2rotmat(q_rb(KK_rb))
             jj=3*(KK_rb-1)
             Inertial_component=rbmconn_Inertial_body(jj +1:jj+3, jj +1:jj+3)
             Inertial=matmul(swimcm_rotation,Inertial_component)
@@ -437,8 +445,8 @@
              
             swimcm_Inertial=rbmconn_Inertial(jj+1:jj+3,jj+1:jj+3)*mass_par
             angular_Inertial=matmul(swimcm_Inertial,angular_velocity)
-            CALL CrossProduct3D (angular_velocity, angular_Inertial,swimcm)
-            rbmconn_torque(jj+1:jj+3)=swimcm
+            !CALL CrossProduct3D (angular_velocity, angular_Inertial,swimcm)
+            rbmconn_torque(jj+1:jj+3)=CrossProduct3D(angular_velocity, angular_Inertial)
         end do
 
     end subroutine swim_rbmconn_torque

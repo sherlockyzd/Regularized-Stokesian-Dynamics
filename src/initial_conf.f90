@@ -13,6 +13,7 @@
   use lambda_Dim
   use tensors,only:pai
   use rb_conglomerate
+  use filament
 
   implicit none
   private
@@ -21,9 +22,80 @@
 
   public::INIT_READ_CONTROL,INIT_VMD_WRITE,VMD_WRITE,yetamu_WRITE,END_VMD_WRITE, &
       & INITIAL_SIZE,INITIAL_LB0,INITIAL_CONF,boundary_condition,VMD_WRITE_BDY,&
-      & INIT_DIM_WRITE,boundary_correct_condition,INITIAL_LB
+      & INIT_DIM_WRITE,boundary_correct_condition,INITIAL_LB,INITIAL_CONF_ALLOCATION, &
+      & END_CONF_DEALLOCATION
 
   contains
+
+
+
+    subroutine INITIAL_CONF_ALLOCATION()
+    IMPLICIT NONE
+    INTEGER status
+
+      if(K_rb.ne.0)then
+        ALLOCATE (conf_rb(3,K_rb) ,STAT=status)
+        ALLOCATE (conf_rb_vector(3,Np) ,STAT=status)
+        ALLOCATE (U_par_rb(6*K_rb) ,STAT=status)
+        ALLOCATE (q_rb(K_rb) ,STAT=status)
+        ALLOCATE (rbmconn_Inertial_body(3*K_rb,3*K_rb) ,STAT=status)
+        ALLOCATE (rbmconn_Inertial_body_inverse(3*K_rb,3*K_rb) ,STAT=status)
+      endif
+
+      if(F_rb.ne.0)then
+        ALLOCATE (index1(F_rb) ,STAT=status)
+        ALLOCATE (Filament_conf_past(3,Nfilament) ,STAT=status)
+        ALLOCATE (Filament_tau_now(3,Nfilament) ,STAT=status)
+        ALLOCATE (Filament_tau_next(3,Nfilament) ,STAT=status)
+        ALLOCATE (Filament_U1_now(3*F_rb) ,STAT=status)
+        ALLOCATE (Filament_X1_next(3*F_rb) ,STAT=status)
+        ALLOCATE (Filament_X1_now(3*F_rb) ,STAT=status)
+        ALLOCATE (Filament_X1_past(3*F_rb) ,STAT=status)
+        ALLOCATE (Filament_Inertial_lambda(3*Nfilament),STAT=status)
+        ALLOCATE (Filament_Inertial_torque(3*Nfilament),STAT=status)
+        ALLOCATE (Filament_Lie_algebra_now(3*Nfilament),STAT=status)
+        ALLOCATE (Filament_Lie_algebra_next(3*Nfilament),STAT=status)
+        ALLOCATE (Filament_q(Nfilament) ,STAT=status)
+      endif
+
+    end subroutine INITIAL_CONF_ALLOCATION
+
+
+
+  subroutine END_CONF_DEALLOCATION()
+  IMPLICIT NONE
+  if(K_rb.ne.0)then 
+      if(allocated(KK_rbmconn)) DEALLOCATE(KK_rbmconn)
+      if(allocated(conf_rb_vector))  DEALLOCATE( conf_rb_vector)
+      if(allocated(U_par_rb)) DEALLOCATE(U_par_rb)
+      if(allocated(q_rb)) DEALLOCATE( q_rb)  
+      if(allocated(rbmconn_Inertial_body)) DEALLOCATE( rbmconn_Inertial_body)
+      if(allocated(rbmconn_Inertial_body_inverse)) DEALLOCATE( rbmconn_Inertial_body_inverse)
+      if(allocated(conf_rb))  DEALLOCATE( conf_rb)
+  endif
+  if(F_rb.ne.0)then
+      if(allocated(Filament_num)) DEALLOCATE(Filament_num)
+      if(allocated(index1)) DEALLOCATE(index1)
+      if(allocated(Filament_conf_past))  DEALLOCATE( Filament_conf_past)
+      if(allocated(Filament_tau_base)) DEALLOCATE( Filament_tau_base)
+      if(allocated(Filament_tau_now)) DEALLOCATE( Filament_tau_now)
+      if(allocated(Filament_tau_next)) DEALLOCATE( Filament_tau_next)
+      if(allocated(Filament_tau_now)) DEALLOCATE( Filament_tau_now)
+      if(allocated(Filament_U1_now))  DEALLOCATE( Filament_U1_now)
+      if(allocated(Filament_X1_next))  DEALLOCATE( Filament_X1_next)
+      if(allocated(Filament_X1_now))  DEALLOCATE( Filament_X1_now)
+      if(allocated(Filament_X1_past))  DEALLOCATE( Filament_X1_past)
+      if(allocated(Filament_Inertial_lambda))  DEALLOCATE( Filament_Inertial_lambda)
+      if(allocated(Filament_Inertial_torque))  DEALLOCATE( Filament_Inertial_torque)
+      if(allocated(Filament_Lie_algebra_now)) DEALLOCATE(Filament_Lie_algebra_now)
+      if(allocated(Filament_Lie_algebra_next)) DEALLOCATE(Filament_Lie_algebra_next)
+      if(allocated(Filament_q))  DEALLOCATE( Filament_q)
+  endif
+
+  end subroutine END_CONF_DEALLOCATION
+
+
+
       subroutine INIT_READ_CONTROL()
 
       LOGICAL::THERE
@@ -114,7 +186,7 @@
 
       open(20,file='yeta_mu.txt')
       OPEN(31,FILE='output.VTF') ! xyz file for vmd
-      open(50,file='SYS_property.txt')
+      !open(50,file='SYS_property.txt')
       open(51,file='DIM_property.txt')
 
       !WRITE(31,*) '# ',NN*1,' ',L0_PAR,' ',K_PAR,' ',LJ_SIGMA, &
@@ -169,7 +241,7 @@
       REAL(8),intent(in):: CONF(3,NN),T,RADII(NN),U_pos(6*NN)!,SijN(5*NN)
       INTEGER I
       DO I = 1, NN-Nb
-       write(31,"(13ES24.15)")T,CONF(:,I),RADII(I),U_pos(3*(I-1)+1), &
+       write(31,"(13e24.15e3)")T,CONF(:,I),RADII(I),U_pos(3*(I-1)+1), &
        & U_pos(3*(I-1)+2),U_pos(3*(I-1)+3)
        !,SijN(5*(I-1)+1),SijN(5*(I-1)+2), &
        !& SijN(5*(I-1)+3),SijN(5*(I-1)+4),SijN(5*(I-1)+5)
@@ -190,7 +262,6 @@
        !& SijN(5*(I-1)+3),SijN(5*(I-1)+4),SijN(5*(I-1)+5)
       ENDDO
       close(32)
-      RETURN
       END
 
       SUBROUTINE yetamu_WRITE(T,yeta_mu,LB,frequency,GAMMA,GAMMAangle)
@@ -300,19 +371,36 @@
 
          if(IsCaseLattice==0) then
            READ(11,*) Np
-           READ(11,*) K_rb
+           READ(11,*) K_rb,Nswimer
+           READ(11,*) F_rb,Nfilament
+           write(*,*) 'K_rb,F_rb====',K_rb,F_rb
+           if(K_rb*F_rb.ne.0) then
+              write(*,*) 'error:K_rb,F_rb====',K_rb,F_rb
+              stop
+           endif
+
            if(K_rb.ne.0)then
              ALLOCATE (KK_rbmconn(K_rb) ,STAT=istat)
              READ(11,*) KK_rbmconn(:)
-             if(sum(KK_rbmconn(:)).eq.Np) then
+             if(sum(KK_rbmconn(:)).eq.Nswimer) then
                write(*,*) 'KK_rbmconn',KK_rbmconn(:) 
               else
                write(*,*) 'error--------KK_rbmconn',KK_rbmconn(:) 
                stop
              endif
+           elseif(F_rb.ne.0)then
+             ALLOCATE (Filament_num(F_rb) ,STAT=istat)
+             READ(11,*) Filament_num(:)
+             if(sum(Filament_num(:)).eq.Nfilament) then
+               write(*,*) 'Filament_num',Filament_num(:) 
+              else
+               write(*,*) 'error--------Filament_num',Filament_num(:) 
+               stop
+             endif
            else
              READ(11,*)
            endif
+
            READ(11,*) alphaX,betaY,gamaZ
            alphaX=alphaX*pai/180.0_8
            betaY=betaY*pai/180.0_8
@@ -361,14 +449,9 @@
 
       SUBROUTINE INITIAL_CONF()
       IMPLICIT NONE
-      !REAL*8,intent(in):: T
-      
-      
-      INTEGER I,J,K,IJK,mm,num,istat
-      
+      !REAL*8,intent(in):: T      
+      INTEGER I,J,K,IJK,mm,num,istat   
       real*8 pos(3,3),Ireal1
-
-     ! 
 
        !nl=NX+0
       if(IsCaseLattice==0) then

@@ -1,5 +1,5 @@
 0                        !0:no 1:YAMAKAWAcorrection 2:Regular_CORRECTION
-.true.                   !FTS_method
+.false.                   !FTS_method
 .false.                   !use Lub
 .false.                  !use DEM
 .false.                   !usecollision
@@ -25,7 +25,7 @@
 920.0d0                  !pho_f
 1.0d0                    ! Renolds number
 0.00d0                    !Gamma_alpha
-3.40E9                   !Young's Module
+1.00E4                   !Young's Module(3.40E9)
 0.50                     !Poisson_ratio
 2000                     ! DEM:ksp(spring stiffness)ksp=EA/l  
 0.5                      ! DEM:erest 
@@ -34,8 +34,8 @@
 1                        !collision_condition 0:per elastic 1:Viscoelastic 2:other
 .false.                  ! muCalculate
 0                        ! initial time
-4.0                        ! END TIME
-5.0e-4                    ! DT
+5.0                        ! END TIME
+5.0e-5                    ! DT
 10                       ! WRITE FREQUENCY
 1                        ! LJ EPS
 2                        ! LJ SIGMA

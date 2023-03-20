@@ -20,6 +20,8 @@
   USE OMP_LIB
   use rb_conglomerate
   use conglomerate,only:rbmconn_Init
+  use filament
+  use filament_math
 
 
   implicit none
@@ -73,17 +75,17 @@
   U_pos=0.0_8
   CALL INITIAL_CONF()
 
+  CALL INITIAL_CONF_ALLOCATION()
   if(K_rb.ne.0)then
-    ALLOCATE (conf_rb(3,K_rb) ,STAT=status)
-    ALLOCATE (conf_rb_vector(3,Np) ,STAT=status)
-    ALLOCATE (U_par_rb(6*K_rb) ,STAT=status)
-    ALLOCATE (q_rb(K_rb) ,STAT=status)
-    ALLOCATE (rbmconn_Inertial_body(3*K_rb,3*K_rb) ,STAT=status)
-    ALLOCATE (rbmconn_Inertial_body_inverse(3*K_rb,3*K_rb) ,STAT=status)
     CALL rbmconn_Init(NN,CONF,RADII,U_pos,conf_rb,U_par_rb,q_rb)
+  elseif(F_rb.ne.0)then
+    CALL filament_Init(NN,CONF,RADII,U_pos)
   endif
-  call VMD_WRITE_BDY(CONF,T,RADII)
-   
+
+  if(boundary) then
+    call VMD_WRITE_BDY(CONF,T,RADII)
+  endif
+   write(*,*)'1---------------------check'
     K_time=0
 
     ALLOCATE(grmobmxsave(6*NN,6*NN),STAT=status) 
@@ -135,12 +137,12 @@
     write(*,*) 'LB0:',LB0,'Re_number=',Re_number, &
                'pho_f=',pho_f,'frequency=',frequency,'gamma_alpha=',GAMMA_alpha
 
-    WRITE(50,*) 'BASE_DT,GAMMA,LB(1),LB0,Re_number,pho_f, & 
+    WRITE(*,*) 'BASE_DT,GAMMA,LB(1),LB0,Re_number,pho_f, & 
               & frequency,GAMMA_alpha'
 
-    WRITE(50,"(15ES24.15)") BASE_DT,GAMMA,LB(1),LB0,Re_number,pho_f, & 
+    WRITE(*,"(15ES24.15)") BASE_DT,GAMMA,LB(1),LB0,Re_number,pho_f, & 
               frequency,GAMMA_alpha
-    close(50)
+    !close(50)
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!important!!!!!
     
@@ -171,8 +173,6 @@
         CALL STEPPER_Stokesian(CONF,RADII,DT,T,yeta_mu,U_pos,SijN)
       !else
 
-      write(*,*) "rigid5==================================="
-
       IF (mod(K_time,K_WRITE) .eq. 0) then
         write(20,"(12ES24.15)") T/lambda_time,yeta_mu(:),LB(1),frequency,GAMMA,GAMMAangle
       ENDIF
@@ -197,31 +197,31 @@
 
       write(*,*)'T=========================',T
 
+      if(isnan(U_pos(2))) then 
+       write(*,*) "U_pos must be nan",U_pos(1:3)
+       stop
+      endif
       !write(*,*)'LR=',LR
       !write(*,*)'LI=',LI
     ENDDO Time
 
-  if(allocated(grmobmxsave))  DEALLOCATE( grmobmxsave)
-  if(allocated(CONF))  DEALLOCATE( CONF)
-  if(allocated(CONFBDY))  DEALLOCATE( CONFBDY)
-  if(allocated(CONF_DEM)) DEALLOCATE( CONF_DEM)
-  if(allocated(RADII)) DEALLOCATE( RADII)
-  if(allocated(RADIIBDY)) DEALLOCATE( RADIIBDY)
-  if(allocated(U_pos)) DEALLOCATE( U_pos)
-  if(allocated(Floc_index)) DEALLOCATE(Floc_index) 
-  if(allocated(KK_rbmconn)) DEALLOCATE(KK_rbmconn)
-  if(allocated(conf_rb_vector))  DEALLOCATE( conf_rb_vector)
-  if(allocated(U_par_rb)) DEALLOCATE(U_par_rb)
-  if(allocated(q_rb)) DEALLOCATE( q_rb)  
-  if(allocated(rbmconn_Inertial_body)) DEALLOCATE( rbmconn_Inertial_body)
-  if(allocated(rbmconn_Inertial_body_inverse)) DEALLOCATE( rbmconn_Inertial_body_inverse)
-  if(allocated(conf_rb))  DEALLOCATE( conf_rb)
+    if(allocated(grmobmxsave))  DEALLOCATE( grmobmxsave)
+    if(allocated(CONF))  DEALLOCATE( CONF)
+    if(allocated(CONFBDY))  DEALLOCATE( CONFBDY)
+    if(allocated(CONF_DEM)) DEALLOCATE( CONF_DEM)
+    if(allocated(RADII)) DEALLOCATE( RADII)
+    if(allocated(RADIIBDY)) DEALLOCATE( RADIIBDY)
+    if(allocated(U_pos)) DEALLOCATE( U_pos)
+    if(allocated(Floc_index)) DEALLOCATE(Floc_index)
+
+    CALL END_CONF_DEALLOCATION()
 
   enddo LB_size
  
   CALL END_VMD_WRITE()
 
   if(allocated(LB0_list)) DEALLOCATE(LB0_list)
+  if(allocated(Filament_num)) DEALLOCATE(Filament_num)
   call toc()
   ompend=omp_get_wtime()
   print*,' >>> omp Total time (s)',ompend-ompstart

@@ -1,17 +1,3 @@
-
-    SUBROUTINE CrossProduct3D (X,Y,Z) 
-    IMPLICIT NONE
-
-      REAL(8),INTENT(IN)  :: X(3), Y(3)
-      REAL(8),INTENT(OUT) :: Z(3)
-      Z=0.0_8
-      Z(1) = X(2)*Y(3)-X(3)*Y(2)
-      Z(2) = X(3)*Y(1)-X(1)*Y(3)
-      Z(3) = X(1)*Y(2)-X(2)*Y(1)
-      RETURN
-    END SUBROUTINE CrossProduct3D
-  
-
     
 !  lapack based matrix inversion
 
