@@ -45,6 +45,7 @@
       if(F_rb.ne.0)then
         ALLOCATE (index1(F_rb) ,STAT=status)
         ALLOCATE (Filament_conf_past(3,Nfilament) ,STAT=status)
+        ALLOCATE (Filament_conf_now(3,Nfilament) ,STAT=status)
         ALLOCATE (Filament_tau_now(3,Nfilament) ,STAT=status)
         ALLOCATE (Filament_tau_next(3,Nfilament) ,STAT=status)
         ALLOCATE (Filament_U1_now(3*F_rb) ,STAT=status)
@@ -77,6 +78,7 @@
       if(allocated(Filament_num)) DEALLOCATE(Filament_num)
       if(allocated(index1)) DEALLOCATE(index1)
       if(allocated(Filament_conf_past))  DEALLOCATE( Filament_conf_past)
+      if(allocated(Filament_conf_now))  DEALLOCATE( Filament_conf_now)
       if(allocated(Filament_tau_base)) DEALLOCATE( Filament_tau_base)
       if(allocated(Filament_tau_now)) DEALLOCATE( Filament_tau_now)
       if(allocated(Filament_tau_next)) DEALLOCATE( Filament_tau_next)

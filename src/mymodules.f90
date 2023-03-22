@@ -527,19 +527,21 @@
 
 
 
-    function Lie_algebra_update(u,q0)  result(q1)
+    function Lie_algebra_update(u,q0)  result(q_norm)
     type(quaternion), intent(in) :: q0
     real*8,intent(in)::u(3)
-
-    type(quaternion) :: q1,qu
+    type(quaternion) :: q1,qu,q_norm
     !real*8, intent(out)::
     real*8 :: ucos,usin,unorm
+    
     unorm=sqrt(sum(u**2))
     ucos=cos(unorm*0.5_8)
     usin=sin(unorm*0.5_8)/unorm
     qu%r=ucos
     qu%i=usin*u(1);qu%j=usin*u(2);qu%k=usin*u(3)
     q1=qu*q0
+    q_norm=qscal(1.0_8/qnorm(q1) , q1)
+
     end function Lie_algebra_update
 
 
@@ -586,7 +588,7 @@
       use quaternions     
       implicit none
       INTEGER F_rb
-      INTEGER,ALLOCATABLE :: Filament_num(:),index1(:),Filament_conf_past(:,:)
+      INTEGER,ALLOCATABLE :: Filament_num(:),index1(:),Filament_conf_past(:,:),Filament_conf_now(:,:)
       REAL*8, ALLOCATABLE :: Filament_tau_base(:,:),Filament_tau_now(:,:),Filament_tau_next(:,:)
       REAL*8, ALLOCATABLE :: Filament_U1_now(:),Filament_X1_next(:),Filament_X1_now(:),Filament_X1_past(:)
       REAL*8, ALLOCATABLE :: Filament_Inertial_lambda(:),Filament_Inertial_torque(:)
