@@ -93,7 +93,7 @@
           F0=F0-Filament_tau_base(:,jj)/ds
           F1=0.0_8
           F1(1)=F0(1)*EA;
-          !F1(2)=F0(2)*GA;F1(3)=F0(3)*GA
+          F1(2)=F0(2)*GA;F1(3)=F0(3)*GA
           force=qrot(q_mid,F1)
           ! Elastic torques
           !dqds =dqsub(Filament_q(jj+1),Filament_q(jj))/ds
@@ -108,7 +108,7 @@
           write(*,*) 'internal_torque===========',torque(:)
 
           Internal_torque( 3*(jj-1)+1:3*jj) =torque(:)
-          Internal_force( 3*(jj-1)+1:3*jj) =force(:)
+          Internal_force ( 3*(jj-1)+1:3*jj) =force(:)
       end do
       num_fila_sum=num_fila_sum+num_fila
   end do
