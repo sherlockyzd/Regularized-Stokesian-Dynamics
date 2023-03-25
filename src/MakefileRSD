@@ -25,7 +25,7 @@ CFD_DEFS   = -fopenmp#-DmuCalculate
 
 
 CFD_inc    = 
-CFD_lib    =  -lm
+CFD_lib    =  -lm -llapack -lblas
 
 # CFD source files
 SrcT:= Prtcl_TypeDef.f90 Prtcl_Timer.f90 Prtcl_Parameters.f90 Prtcl_Decomp_2d.f90 Prtcl_LogInfo.f90            \

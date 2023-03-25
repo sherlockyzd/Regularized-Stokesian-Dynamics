@@ -34,6 +34,89 @@
       END
 
 
+    subroutine inverse_squarematrix_1(n,A,Ainv)
+    implicit none
+    integer,intent(in):: n
+    real*8,intent(in) :: A(n,n)
+    real*8,intent(out):: Ainv(n,n)
+    real*8          :: b(n,n),work(n)            ! work array for LAPACK
+    integer         :: info,ipiv(n),lda,ldb,nrhs,ii    ! pivot indices
+    CHARACTER*1     ::trans
+    PARAMETER (trans = 'N')
+
+    lda=size(A,1)
+    b=0.0_8
+    do ii=1,n
+      b(ii,ii)=1.0_8
+    enddo
+    ldb=size(b,1)
+    nrhs=size(b,2)
+    ! Store A in Ainv to prevent it from being overwritten by LAPACK
+    Ainv = A
+    !n = size(A,1)
+    ! SGETRF computes an LU factorization of a general M-by-N matrix A
+    ! using partial pivoting with row interchanges.
+    call DGETRF(n,n,Ainv,n,ipiv,info)
+    if (info.ne.0) stop 'Matrix is numerically singular!'
+    ! SGETRI computes the inverse of a matrix using the LU factorization
+    ! computed by SGETRF.
+    !call SGETRI(n,Ainv,n,ipiv,work,n,info)
+    call DGETRS(trans,n,nrhs,Ainv,lda,ipiv,b,ldb,info)
+    if (info.ne.0) stop 'Matrix inversion failed!'
+    Ainv=b
+    end subroutine inverse_squarematrix_1
+
+    subroutine inverse_squarematrix_2(n,A,b,x)
+    implicit none
+    integer,intent(in):: n
+    real*8,intent(in) :: A(n,n),b(n,1)
+    real*8,intent(out):: x(n,1)
+    real*8          :: Ainv(n,n)           ! work array for LAPACK
+    integer         :: info,ipiv(n),lda,ldb,nrhs,ii    ! pivot indices
+    CHARACTER*1     ::trans
+    PARAMETER (trans = 'N')
+
+    lda=size(A,1)
+    ldb=size(b,1)
+    nrhs=size(b,2)
+    x=b
+    ! Store A in Ainv to prevent it from being overwritten by LAPACK
+    Ainv = A
+    !n = size(A,1)
+    ! SGETRF computes an LU factorization of a general M-by-N matrix A
+    ! using partial pivoting with row interchanges.
+    call DGETRF(n,n,Ainv,n,ipiv,info)
+    if (info.ne.0) stop 'Matrix is numerically singular!'
+    ! SGETRI computes the inverse of a matrix using the LU factorization
+    ! computed by SGETRF.
+    call DGETRS(trans,n,nrhs,Ainv,lda,ipiv,x,ldb,info)
+    if (info.ne.0) stop 'Matrix inversion failed!'
+    end subroutine inverse_squarematrix_2
+
+
+
+    subroutine inverse_squarematrix(n,A,Ainv)
+    implicit none
+    integer,intent(in):: n
+    real*8,intent(in) :: A(n,n)
+    real*8,intent(out):: Ainv(n,n)
+    real*8          :: work(n)            ! work array for LAPACK
+    integer         :: info,ipiv(n)    ! pivot indices
+
+
+    ! Store A in Ainv to prevent it from being overwritten by LAPACK
+    Ainv = A
+    !n = size(A,1)
+    ! SGETRF computes an LU factorization of a general M-by-N matrix A
+    ! using partial pivoting with row interchanges.
+    call DGETRF(n,n,Ainv,n,ipiv,info)
+    if (info.ne.0) stop 'Matrix is numerically singular!'
+    ! SGETRI computes the inverse of a matrix using the LU factorization
+    ! computed by SGETRF.
+    call DGETRI(n,Ainv,n,ipiv,work,n,info)
+    !call SGETRS(trans,n,nrhs,A,lda,ipiv,b,ldb,info)
+    if (info.ne.0) stop 'Matrix inversion failed!'
+    end subroutine inverse_squarematrix
 !***********************************************************
 !***********************************************************
 !***********************************************************

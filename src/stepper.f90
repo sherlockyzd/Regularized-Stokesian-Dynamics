@@ -17,6 +17,7 @@
   use rb_conglomerate,only:K_rb,conf_rb,U_par_rb,q_rb
   use filament
   use filament_math
+  use filament_solve_Jacobian
   implicit none
   private
 
@@ -157,8 +158,10 @@
         call new_conf_swim(NN,conf,T,U_par_rb,conf_rb,q_rb)
         write(*,*) 'new_conf_rb_rb_rb____okok'
       elseif(F_rb.ne.0) then
-
-        call new_conf_filament(NN,conf,T,U_pos)
+        !if(.not.solve_implicit) then
+            call new_conf_filament(NN,conf,T,U_pos)
+        !else
+        !endif
         write(*,*) 'new_conf_filament_____filament_____filament_____okok'
       else
         call INIT_uo_bg(conf,uo_bg)
@@ -220,7 +223,7 @@
         endif
         call arrangResist(NN,rfu,rfe,rse,RPP0,RPQ0,RQQ0,RPP,RPQ,RQQ)
 
-        
+
 
         U_add=U_par
         U_add(1:3*NN)=U_add(1:3*NN)-u_brown
@@ -233,6 +236,7 @@
             write(*,*) 'i,Fhtotal===',i,Fh(3*(i-1)+1:3*i)
             write(*,*) 'i,htorue ===',i,Fh(3*NN+3*(i-1)+1:3*NN+3*i)
         enddo
+
         Ftotal = Fe+Fh
 
         if(K_rb.ne.0)then
@@ -242,26 +246,21 @@
             !write(*,*) 'Ftotal(i)===',i,Ftotal(6*(i-1)+1),Ftotal(6*(i-1)+1),Ftotal(6*(i-1)+2),Ftotal(6*(i-1)+3)
            !enddo
         elseif(F_rb.ne.0) then
-
-
-        do i=1,NN-Nb
-            write(*,*) 'i,Ftotal===',i,Ftotal(3*(i-1)+1:3*i)
-            write(*,*) 'i, torue===',i,Ftotal(3*NN+3*(i-1)+1:3*NN+3*i)
-        enddo
-           call new_U1_filament(NN,RADII,Ftotal,U_pos)
-            do i=1,NN-Nb
-                write(*,*) 'i,U_posnew===',i,U_pos(3*(i-1)+1:3*i)
-            enddo
-            do i=1,NN-Nb
-                write(*,*) 'i,omega_posnew===',i,U_pos(3*NN+3*(i-1)+1:3*NN+3*i)
-            enddo
-            !stop
-              write(*,*) 'U_par_filament_____filament_____filament_____okok'
+            if(.not.solve_implicit) then
+              call new_U1_filament(NN,RADII,Ftotal,U_pos)
+            else
+              write(*,*) 'filament_____using IMPLICIT'
+              !Filament_U_now=U_pos
+              call filament_implicit_solve(Nfilament,Filament_X1_now,Filament_X1_past,Filament_U1_now,Filament_tau_now, &
+                  & Filament_Lie_algebra_now,Filament_Interal_force,Fe,Filament_conf_now,Filament_conf_past,U_pos,Filament_q)
+              !call filament_implicit_solve(Nfilament,X1_now,X1_past,U1_now,tau_now,Lie_algebra_now, &
+              !      & Internal_force,Fe,conf_now,conf_past,U_now,q_now)
+            endif
+            write(*,*) 'U_par_filament_____filament_____filament_____okok'
         else
             U_par=U_par+Ftotal*DT_DEM/mass_par
         endif
-        
-       
+          
         !do i=1,NN-Nb
          ! mass = pho_par*4.0_8/3.0_8*pai*RADII(i)**3
          ! do j=1,3 
@@ -270,9 +269,6 @@
           !enddo
         !enddo
 
-        !forall(i=1:NN-Nb,j=1:3)
-          
-        !end forall
 
         call arrangement(RPP,RPQ,RQQ,mu,NN)
         

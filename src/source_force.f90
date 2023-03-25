@@ -240,7 +240,7 @@
       !use SYS_property,only:gravity
       use size,only:NN,Nb
       use method,only:usecollision,wall_method,useDLVO,usebond
-      use filament,only:F_rb
+      use filament,only:F_rb,solve_implicit
       use filament_math,only:InternalForcesAndTorques
       IMPLICIT NONE
       real*8,intent(in)::RADII(NN),conf(3,NN),U_pos(6*NN)
@@ -295,7 +295,8 @@
           write(*,*) 'i,internal_Fe_torque===',ii,Fe(3*NN+3*(ii-1)+1:3*NN+3*ii)
               !write(*,*) 'i, torue===',ii,Ftotal(3*NN+3*(ii-1)+1:3*NN+3*ii)
       enddo  
-      if (F_rb.ne.0)then
+
+      if (F_rb.ne.0.and.(.not.solve_implicit))then
         call InternalForcesAndTorques(NN,conf,Filament_internal_force_torque)            
         Fe=Fe+Filament_internal_force_torque
       endif

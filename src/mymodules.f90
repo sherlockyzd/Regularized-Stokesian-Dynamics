@@ -21,7 +21,8 @@
       MODULE CONFIG   ! CONF, W
       implicit none
       !save
-      REAL*8, ALLOCATABLE :: CONF(:,:),RADII(:),CONFBDY(:,:),RADIIBDY(:),CONF_DEM(:,:)
+      REAL*8, ALLOCATABLE :: CONF(:,:),RADII(:)!,U_pos(:)
+      REAL*8, ALLOCATABLE :: CONFBDY(:,:),RADIIBDY(:),CONF_DEM(:,:)
       INTEGER, ALLOCATABLE :: Floc_index(:)
       REAL*8 W,u_bg(3),omega_bg(3),omegaT(3,3),Eij(3,3),EI_bg(6),radii_test,radii_true
       INTEGER POLY_LEN
@@ -533,10 +534,14 @@
     type(quaternion) :: q1,qu,q_norm
     !real*8, intent(out)::
     real*8 :: ucos,usin,unorm
-    
-    unorm=sqrt(sum(u**2))
+
+    unorm=sqrt(sum(u**2))+1e-16
     ucos=cos(unorm*0.5_8)
+    !if(unorm.lt.1e-5) then
+     ! usin=0.0_8
+    !else
     usin=sin(unorm*0.5_8)/unorm
+    !endif
     qu%r=ucos
     qu%i=usin*u(1);qu%j=usin*u(2);qu%k=usin*u(3)
     q1=qu*q0
@@ -554,15 +559,16 @@
     real*8 :: ucot,uscalar,unorm,uw(3)
 
     unorm=sqrt(sum(u**2))
-    ucot=unorm/tan(unorm*0.5_8)-2.0_8
-    uscalar=0.5*ucot/(unorm*unorm)
+
+    if(unorm.lt.1e-16) then
+      uscalar=-1.0_8/12.0_8
+    else
+      ucot=unorm/tan(unorm*0.5_8)-2.0_8
+      uscalar=0.5_8*ucot/(unorm*unorm)
+    endif
     uw(:)= CrossProduct3D(u,CrossProduct3D(u,w))
-    dexpu=w-0.5*CrossProduct3D(u,w)-uscalar*uw
+    dexpu(:)=w-0.5*CrossProduct3D(u,w)-uscalar*uw
     end function dexpu_inv
-
-
-
-
 
     end module quaternions  
 
@@ -588,12 +594,14 @@
       use quaternions     
       implicit none
       INTEGER F_rb
-      INTEGER,ALLOCATABLE :: Filament_num(:),index1(:),Filament_conf_past(:,:),Filament_conf_now(:,:)
-      REAL*8, ALLOCATABLE :: Filament_tau_base(:,:),Filament_tau_now(:,:),Filament_tau_next(:,:)
-      REAL*8, ALLOCATABLE :: Filament_U1_now(:),Filament_X1_next(:),Filament_X1_now(:),Filament_X1_past(:)
-      REAL*8, ALLOCATABLE :: Filament_Inertial_lambda(:),Filament_Inertial_torque(:)
-      REAL*8, ALLOCATABLE :: Filament_Lie_algebra_now(:),Filament_Lie_algebra_next(:)
+      INTEGER,ALLOCATABLE :: Filament_num(:),index1(:)
+      REAL*8, ALLOCATABLE :: Filament_conf_past(:,:),Filament_conf_now(:,:)
+      REAL*8, ALLOCATABLE :: Filament_tau_base(:,:),Filament_tau_now(:,:)
+      REAL*8, ALLOCATABLE :: Filament_U1_now(:),Filament_X1_now(:),Filament_X1_past(:)
+      REAL*8, ALLOCATABLE :: Filament_Interal_force(:)!,Filament_Inertial_torque(:)
+      REAL*8, ALLOCATABLE :: Filament_Lie_algebra_now(:)
       type(quaternion), ALLOCATABLE:: Filament_q(:)
+      logical::solve_implicit
       REAL*8 ::Filament_Inertial_body_inverse(3,3),Filament_Inertial_body(3,3)
       REAL*8 ::GI,EI,GA,EA
       

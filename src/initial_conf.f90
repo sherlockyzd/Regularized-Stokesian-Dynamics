@@ -47,15 +47,15 @@
         ALLOCATE (Filament_conf_past(3,Nfilament) ,STAT=status)
         ALLOCATE (Filament_conf_now(3,Nfilament) ,STAT=status)
         ALLOCATE (Filament_tau_now(3,Nfilament) ,STAT=status)
-        ALLOCATE (Filament_tau_next(3,Nfilament) ,STAT=status)
+        !ALLOCATE (Filament_tau_next(3,Nfilament) ,STAT=status)
         ALLOCATE (Filament_U1_now(3*F_rb) ,STAT=status)
-        ALLOCATE (Filament_X1_next(3*F_rb) ,STAT=status)
+        !ALLOCATE (Filament_X1_next(3*F_rb) ,STAT=status)
         ALLOCATE (Filament_X1_now(3*F_rb) ,STAT=status)
         ALLOCATE (Filament_X1_past(3*F_rb) ,STAT=status)
-        ALLOCATE (Filament_Inertial_lambda(3*Nfilament),STAT=status)
-        ALLOCATE (Filament_Inertial_torque(3*Nfilament),STAT=status)
+        !ALLOCATE (Filament_Inertial_lambda(3*Nfilament),STAT=status)
+        ALLOCATE (Filament_Interal_force(6*Nfilament),STAT=status)
         ALLOCATE (Filament_Lie_algebra_now(3*Nfilament),STAT=status)
-        ALLOCATE (Filament_Lie_algebra_next(3*Nfilament),STAT=status)
+        !ALLOCATE (Filament_Lie_algebra_next(3*Nfilament),STAT=status)
         ALLOCATE (Filament_q(Nfilament) ,STAT=status)
       endif
 
@@ -81,16 +81,16 @@
       if(allocated(Filament_conf_now))  DEALLOCATE( Filament_conf_now)
       if(allocated(Filament_tau_base)) DEALLOCATE( Filament_tau_base)
       if(allocated(Filament_tau_now)) DEALLOCATE( Filament_tau_now)
-      if(allocated(Filament_tau_next)) DEALLOCATE( Filament_tau_next)
+      !if(allocated(Filament_tau_next)) DEALLOCATE( Filament_tau_next)
       if(allocated(Filament_tau_now)) DEALLOCATE( Filament_tau_now)
       if(allocated(Filament_U1_now))  DEALLOCATE( Filament_U1_now)
-      if(allocated(Filament_X1_next))  DEALLOCATE( Filament_X1_next)
+      !if(allocated(Filament_X1_next))  DEALLOCATE( Filament_X1_next)
       if(allocated(Filament_X1_now))  DEALLOCATE( Filament_X1_now)
       if(allocated(Filament_X1_past))  DEALLOCATE( Filament_X1_past)
-      if(allocated(Filament_Inertial_lambda))  DEALLOCATE( Filament_Inertial_lambda)
-      if(allocated(Filament_Inertial_torque))  DEALLOCATE( Filament_Inertial_torque)
+      if(allocated(Filament_Interal_force))  DEALLOCATE( Filament_Interal_force)
+      !if(allocated(Filament_Inertial_torque))  DEALLOCATE( Filament_Inertial_torque)
       if(allocated(Filament_Lie_algebra_now)) DEALLOCATE(Filament_Lie_algebra_now)
-      if(allocated(Filament_Lie_algebra_next)) DEALLOCATE(Filament_Lie_algebra_next)
+      !if(allocated(Filament_Lie_algebra_next)) DEALLOCATE(Filament_Lie_algebra_next)
       if(allocated(Filament_q))  DEALLOCATE( Filament_q)
   endif
 
@@ -106,7 +106,8 @@
        IF ( THERE ) THEN
        OPEN(10,FILE='control_file.dat')
        read(10,*) correction_method
-       read(10,*) FTS_method       
+       read(10,*) FTS_method 
+       read(10,*) solve_implicit      
        read(10,*) uselub
        read(10,*) useDEM 
        read(10,*) usecollision
