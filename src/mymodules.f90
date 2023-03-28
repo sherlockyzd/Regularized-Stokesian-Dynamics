@@ -325,7 +325,7 @@
 
     dq0=dqsub(q1, q0)
     !call qprint(dq0)
-    if(qnorm(dq0).lt.1e-6)then
+    if(qequal(q1,q0))then
       angle=0.0_8
     else
       dq=qscal(1.0_8/qnorm(dq0) , dq0)

@@ -238,7 +238,7 @@
 
       SUBROUTINE source_inter_F(conf,RADII,U_pos,Fe)
       !use SYS_property,only:gravity
-      use size,only:NN,Nb
+      use size
       use method,only:usecollision,wall_method,useDLVO,usebond
       use filament,only:F_rb,solve_implicit
       use filament_math,only:InternalForcesAndTorques
@@ -291,16 +291,25 @@
       !call repulsiveforce(NN,conf,radii,F_rep)
 
       Fe(1:3*NN)=Fe(1:3*NN)+F !+F_rep!
-      do ii=1,NN
-          write(*,*) 'i,internal_Fe_torque===',ii,Fe(3*NN+3*(ii-1)+1:3*NN+3*ii)
-              !write(*,*) 'i, torue===',ii,Ftotal(3*NN+3*(ii-1)+1:3*NN+3*ii)
-      enddo  
+
+      !do ii=1,NN
+      !    write(*,*) 'i,internal_Fe_not_elastic_torque===',ii,Fe(3*NN+3*(ii-1)+1:3*NN+3*ii)
+      !enddo  
+      !write(*,*) "Nswimer,Nfilament==",Nswimer,Nfilament
 
       if (F_rb.ne.0.and.(.not.solve_implicit))then
-        call InternalForcesAndTorques(NN,conf,Filament_internal_force_torque)            
-        Fe=Fe+Filament_internal_force_torque
+        call InternalForcesAndTorques(Nfilament,conf(:,Nswimer+1:Nswimer+Nfilament),Filament_internal_force_torque)
+        !do ii=1,Nfilament
+        !  write(*,*) 'i,internal_Fe_not_elastic_torque===',ii,Filament_internal_force_torque(3*Nfilament+3*(ii-1)+1:3*Nfilament+3*ii)
+        !enddo     
+        Fe(3*Nswimer+1:3*Nswimer+3*Nfilament)=Fe(3*Nswimer+1:3*Nswimer+3*Nfilament)+Filament_internal_force_torque(1:3*Nfilament)
+        Fe(3*NN+3*Nswimer+1:3*NN+3*Nswimer+3*Nfilament)=Fe(3*NN+3*Nswimer+1:3*NN+3*Nswimer+3*Nfilament)+ &
+        & Filament_internal_force_torque(3*Nfilament+1:6*Nfilament)
       endif
 
+      do ii=1,NN
+          write(*,*) 'i,internal_Fe_torque===',ii,Fe(3*NN+3*(ii-1)+1:3*NN+3*ii)
+      enddo  
 
       end  SUBROUTINE source_inter_F
 

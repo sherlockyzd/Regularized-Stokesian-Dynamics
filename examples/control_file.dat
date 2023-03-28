@@ -1,4 +1,4 @@
-0                        !0:no 1:YAMAKAWAcorrection 2:Regular_CORRECTION
+1                        !0:no 1:YAMAKAWAcorrection 2:Regular_CORRECTION
 .false.                   !FTS_method
 .false.                   !solve_implicit
 .false.                   !use Lub

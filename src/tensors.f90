@@ -1021,3 +1021,28 @@
       !endif
 
       END SUBROUTINE GH_TR
+
+
+      subroutine subToAll_particle(NN,Nswimer,Nfilament,U_pos_swimer,U_pos_filament,U_pos)
+      IMPLICIT NONE
+      integer,intent(in)::NN,Nswimer,Nfilament
+      real*8,intent(in)::U_pos_swimer(6*Nswimer),U_pos_filament(6*Nfilament)
+      real*8,intent(inout)::U_pos(6*NN)
+
+      U_pos(1:3*Nswimer)=U_pos_swimer(1:3*Nswimer)
+      U_pos(3*Nswimer+1:3*Nswimer+3*Nfilament)=U_pos_filament(1:3*Nfilament)
+      U_pos(3*NN+1:3*NN+3*Nswimer)=U_pos_swimer(3*Nswimer+1:6*Nswimer)
+      U_pos(3*NN+3*Nswimer+1:3*NN+3*Nswimer+3*Nfilament)=U_pos_filament(3*Nfilament+1:6*Nfilament)
+      end subroutine subToAll_particle
+
+      subroutine AllTosub_particle(NN,Nswimer,Nfilament,U_pos_swimer,U_pos_filament,U_pos)
+      IMPLICIT NONE
+      integer,intent(in)::NN,Nswimer,Nfilament
+      real*8,intent(out)::U_pos_swimer(6*Nswimer),U_pos_filament(6*Nfilament)
+      real*8,intent(in)::U_pos(6*NN)
+
+      U_pos_swimer(1:3*Nswimer)=U_pos(1:3*Nswimer)
+      U_pos_filament(1:3*Nfilament)=U_pos(3*Nswimer+1:3*Nswimer+3*Nfilament)
+      U_pos_swimer(3*Nswimer+1:6*Nswimer)=U_pos(3*NN+1:3*NN+3*Nswimer)
+      U_pos_filament(3*Nfilament+1:6*Nfilament)=U_pos(3*NN+3*Nswimer+1:3*NN+3*Nswimer+3*Nfilament)
+      end subroutine AllTosub_particle

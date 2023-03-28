@@ -113,9 +113,9 @@
             U_relative=0.0_8 !angular velocity
             U_relative=U_pos-uo_bg!-u_brown
             
-            call STEPPER_UDEM(radii,APP,APQ,AQQ,rfu,rfe,rse,Fe,EIN,RPP,U_relative,U_pos,u_brown,SijN_hyd&
+            call STEPPER_UDEM(radii,APP,APQ,AQQ,rfu,rfe,rse,Fe,EIN,RPP,U_relative,U_pos,u_brown,SijN_hyd &
                & ,Fe_inter,SijN_FP,CONF,SijN_B)
-            write(*,*) "Using STEPPER_UDEM"
+            write(*,*) "Using STEPPER_UDEM success"
              
         else
           if(useGMRESmethod) then
@@ -140,7 +140,7 @@
       !SijN_FP=0.0_8
       call yetamu_solve(APP,RPP,Fe,U_relative,RADII,SijN_hyd,SijN_FP,SijN_B,EIN,yeta_mu)
 
-
+      write(*,*) 'check________STEPPER_Stokesian__________Success!'
       END SUBROUTINE STEPPER_Stokesian
 
 !***********************************************************
@@ -150,20 +150,24 @@
       REAL*8,intent(in)::U_par(6*NN),radii(NN),T
       !REAL*8,intent(inout):: 
    
-      REAL*8 DCONF_1(3*NN),uo_bg(6*NN)
+      REAL*8 DCONF_1(3*NN),uo_bg(6*NN),U_pos_filament(6*Nfilament)
       INTEGER I,J
 
 
       if(K_rb.ne.0) then
-        call new_conf_swim(NN,conf,T,U_par_rb,conf_rb,q_rb)
+        call new_conf_swim(Nswimer,conf(:,1:Nswimer),T,U_par_rb,conf_rb,q_rb)
         write(*,*) 'new_conf_rb_rb_rb____okok'
-      elseif(F_rb.ne.0) then
-        !if(.not.solve_implicit) then
-            call new_conf_filament(NN,conf,T,U_pos)
-        !else
-        !endif
+      endif
+
+
+      if(F_rb.ne.0) then
+        U_pos_filament(1:3*Nfilament)=U_pos(3*Nswimer+1:3*Nswimer+3*Nfilament)
+        U_pos_filament(3*Nfilament+1:6*Nfilament)=U_pos(3*NN+3*Nswimer+1:3*NN+3*Nswimer+3*Nfilament)
+        call new_conf_filament(Nfilament,conf(:,Nswimer+1:Nswimer+Nfilament),T,U_pos_filament)
         write(*,*) 'new_conf_filament_____filament_____filament_____okok'
-      else
+      endif
+
+      if(K_rb.eq.0.and.F_rb.eq.0) then
         call INIT_uo_bg(conf,uo_bg)
         U_pos=U_par+uo_bg
         !call par_index_floc(CONF,radii)
@@ -185,11 +189,9 @@
              U_pos=U_par+uo_bg
           endif
         endif
-
-        
-
        ! call par_index_floc(CONF,radii)
        ! call U_BDY_CORR(U_pos)
+       write(*,*) 'check________STEPPER_conf__________Success!'
       endif
 
       END SUBROUTINE STEPPER_conf
@@ -206,7 +208,9 @@
       REAL*8 RPQ(6*NN,5*NN),RQQ(5*NN,5*NN),UB(6*NN),Fh(6*NN)
       REAL*8 RPP0(6*NN,6*NN),RPQ0(6*NN,5*NN),RQQ0(5*NN,5*NN)
       real*8 mu(5*NN,5*NN),APPR(6*NN,6*NN),U_add(6*NN)
-      REAL*8 DU_1(6*NN),uo_bg(6*NN),Ftotal(6*NN)!,mass
+      REAL*8 DU_1(6*NN),uo_bg(6*NN),Ftotal(6*NN)
+      REAL*8 Ftotal_filament(6*Nfilament),U_pos_filament(6*Nfilament)
+      REAL*8 U_pos_swimer(6*Nswimer),Ftotal_swimer(6*Nswimer)
 
       integer I,J
 
@@ -236,31 +240,54 @@
             write(*,*) 'i,Fhtotal===',i,Fh(3*(i-1)+1:3*i)
             write(*,*) 'i,htorue ===',i,Fh(3*NN+3*(i-1)+1:3*NN+3*i)
         enddo
-
         Ftotal = Fe+Fh
 
+        if(Nswimer.ne.0.and.Nfilament.ne.0) then
+          call AllTosub_particle(NN,Nswimer,Nfilament,U_pos_swimer,U_pos_filament,U_pos)
+          call AllTosub_particle(NN,Nswimer,Nfilament,Ftotal_swimer,Ftotal_filament,Ftotal)
+        elseif(Nswimer.ne.0.and.Nfilament.eq.0) then
+          U_pos_swimer=U_pos(1:6*Nswimer)
+          Ftotal_swimer=Ftotal(1:6*Nswimer)
+        elseif(Nswimer.eq.0.and.Nfilament.ne.0) then
+          U_pos_filament=U_pos(1:6*Nfilament)
+          Ftotal_filament=Ftotal(1:6*Nfilament)
+        endif
+        
         if(K_rb.ne.0)then
-           call new_U_par_rb(NN,CONF,RADII,Ftotal,U_pos,U_par_rb,q_rb)
+           call new_U_par_rb(Nswimer,CONF(:,1:Nswimer),RADII(1:Nswimer),Ftotal_swimer,U_pos_swimer,U_par_rb,q_rb)
            write(*,*) 'U_par_swimmer_____swimmer_____swimmer_____swimmer_____okok'
+        endif
            !do i=1,NN-Nb
             !write(*,*) 'Ftotal(i)===',i,Ftotal(6*(i-1)+1),Ftotal(6*(i-1)+1),Ftotal(6*(i-1)+2),Ftotal(6*(i-1)+3)
            !enddo
-        elseif(F_rb.ne.0) then
+        if(F_rb.ne.0) then
             if(.not.solve_implicit) then
-              call new_U1_filament(NN,RADII,Ftotal,U_pos)
+              write(*,*) 'filament_____using EXPLICIT'
+              call new_U1_filament(Nfilament,RADII(1:Nfilament),Ftotal_filament,U_pos_filament)
             else
               write(*,*) 'filament_____using IMPLICIT'
               !Filament_U_now=U_pos
-              call filament_implicit_solve(Nfilament,Filament_X1_now,Filament_X1_past,Filament_U1_now,Filament_tau_now, &
-                  & Filament_Lie_algebra_now,Filament_Interal_force,Fe,Filament_conf_now,Filament_conf_past,U_pos,Filament_q)
+              call filament_implicit_solve(Nfilament,Filament_X1_now,Filament_X1_past,Filament_U1_now, &
+                & Filament_tau_now,Filament_Lie_algebra_now,Filament_Interal_force,Ftotal_filament, &
+                & Filament_conf_now,Filament_conf_past,U_pos,Filament_q)
               !call filament_implicit_solve(Nfilament,X1_now,X1_past,U1_now,tau_now,Lie_algebra_now, &
               !      & Internal_force,Fe,conf_now,conf_past,U_now,q_now)
             endif
             write(*,*) 'U_par_filament_____filament_____filament_____okok'
-        else
+        endif
+
+        if(K_rb.eq.0.and.F_rb.eq.0) then
             U_par=U_par+Ftotal*DT_DEM/mass_par
         endif
-          
+
+        if(Nswimer.ne.0.and.Nfilament.ne.0) then
+          call subToAll_particle(NN,Nswimer,Nfilament,U_pos_swimer,U_pos_filament,U_pos)
+        elseif(Nswimer.ne.0.and.Nfilament.eq.0) then
+          U_pos(1:6*Nswimer)=U_pos_swimer
+        elseif(Nswimer.eq.0.and.Nfilament.ne.0) then
+          U_pos(1:6*Nfilament)=U_pos_filament
+        endif
+         
         !do i=1,NN-Nb
          ! mass = pho_par*4.0_8/3.0_8*pai*RADII(i)**3
          ! do j=1,3 
@@ -268,8 +295,6 @@
            ! DU_1(3*NN+3*(i-1)+j)=Ftotal(3*NN+3*(i-1)+j)*DT_DEM/mass
           !enddo
         !enddo
-
-
         call arrangement(RPP,RPQ,RQQ,mu,NN)
         
         SijN_hyd=matmul(mu,EIN)
@@ -277,7 +302,22 @@
         call Rheology(CONF,RPQ,RPP,Fe_inter,SijN_FP)
 
         SijN_B=matmul(transpose(RPQ),UB)
-
+                !do i=1,NN-Nb
+         ! mass = pho_par*4.0_8/3.0_8*pai*RADII(i)**3
+         ! do j=1,3 
+            !DU_1=Ftotal*DT_DEM/mass_par
+           ! DU_1(3*NN+3*(i-1)+j)=Ftotal(3*NN+3*(i-1)+j)*DT_DEM/mass
+          !enddo
+        !enddo
+        do i=1,NN-Nb
+          write(*,*) "U_pos====",i,U_pos(3*(i-1)+1:3*i)
+         ! mass = pho_par*4.0_8/3.0_8*pai*RADII(i)**3
+         ! do j=1,3 
+            !DU_1=Ftotal*DT_DEM/mass_par
+           ! DU_1(3*NN+3*(i-1)+j)=Ftotal(3*NN+3*(i-1)+j)*DT_DEM/mass
+          !enddo
+        enddo
+        write(*,*) 'check________STEPPER_UDEM__________Success!'
       end SUBROUTINE STEPPER_UDEM
 
       SUBROUTINE STEPPER_NOGmres(APP,APQ,AQQ,rfu,rfe,rse,Fe,EIN,RPP,U_par,u_brown,SijN_hyd,Fe_inter,SijN_FP,CONF,SijN_B)

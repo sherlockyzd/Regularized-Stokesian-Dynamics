@@ -35,7 +35,7 @@
 
       if(K_rb.ne.0)then
         ALLOCATE (conf_rb(3,K_rb) ,STAT=status)
-        ALLOCATE (conf_rb_vector(3,Np) ,STAT=status)
+        ALLOCATE (conf_rb_vector(3,Nswimer) ,STAT=status)
         ALLOCATE (U_par_rb(6*K_rb) ,STAT=status)
         ALLOCATE (q_rb(K_rb) ,STAT=status)
         ALLOCATE (rbmconn_Inertial_body(3*K_rb,3*K_rb) ,STAT=status)
@@ -372,38 +372,42 @@
           Nb=0
         endif
 
-         if(IsCaseLattice==0) then
+        if(IsCaseLattice==0) then
            READ(11,*) Np
            READ(11,*) K_rb,Nswimer
-           READ(11,*) F_rb,Nfilament
-           write(*,*) 'K_rb,F_rb====',K_rb,F_rb
-           if(K_rb*F_rb.ne.0) then
-              write(*,*) 'error:K_rb,F_rb====',K_rb,F_rb
-              stop
-           endif
-
+           write(*,*) 'K_rb,Nswimer====',K_rb,Nswimer
            if(K_rb.ne.0)then
-             ALLOCATE (KK_rbmconn(K_rb) ,STAT=istat)
-             READ(11,*) KK_rbmconn(:)
-             if(sum(KK_rbmconn(:)).eq.Nswimer) then
+              ALLOCATE (KK_rbmconn(K_rb) ,STAT=istat)
+              READ(11,*) KK_rbmconn(:)
+              if(sum(KK_rbmconn(:)).eq.Nswimer) then
                write(*,*) 'KK_rbmconn',KK_rbmconn(:) 
               else
                write(*,*) 'error--------KK_rbmconn',KK_rbmconn(:) 
-               stop
-             endif
-           elseif(F_rb.ne.0)then
+               CALL EXIT()
+              endif
+            else
+              READ(11,*) 
+            endif
+
+           READ(11,*) F_rb,Nfilament
+           write(*,*) 'F_rb,Nfilament====',F_rb,Nfilament
+           if(F_rb.ne.0)then
              ALLOCATE (Filament_num(F_rb) ,STAT=istat)
              READ(11,*) Filament_num(:)
              if(sum(Filament_num(:)).eq.Nfilament) then
                write(*,*) 'Filament_num',Filament_num(:) 
               else
                write(*,*) 'error--------Filament_num',Filament_num(:) 
-               stop
+               CALL EXIT()
              endif
            else
              READ(11,*)
            endif
 
+           if(Nfilament+Nswimer.gt.Np) then
+              write(*,*) 'error:Nswimer,Nfilament,Np====',Nswimer,Nfilament,Np
+              CALL EXIT()
+           endif
            READ(11,*) alphaX,betaY,gamaZ
            alphaX=alphaX*pai/180.0_8
            betaY=betaY*pai/180.0_8
@@ -416,35 +420,37 @@
              READ(11,*) T,CONF(1,I),CONF(2,I),CONF(3,I),RADII(I)
            ENDDO
            if(K_rb.ne.0) then
-              call swim_rotate_rb(NN,CONF(:,1:Np),alphaX,betaY,gamaZ)
+              call swim_rotate_rb(Nswimer,CONF(:,1:Nswimer),alphaX,betaY,gamaZ)
            endif
-         elseif(IsCaseLattice==1) then      !SC
+
+        elseif(IsCaseLattice==1) then      !SC
            Np=NX*NY*NZ
            NN=Np+Nb
            ALLOCATE( CONF(3,NN) ,STAT=istat)
            ALLOCATE( RADII(NN) ,STAT=istat)
 
-         elseif(IsCaseLattice==2) then        !BCC
+        elseif(IsCaseLattice==2) then        !BCC
            Np=NX*NY*NZ*2
            NN=Np+Nb
            ALLOCATE( CONF(3,NN) ,STAT=istat)
            ALLOCATE( RADII(NN) ,STAT=istat)
 
-         elseif(IsCaseLattice==3) then        !FCC
+        elseif(IsCaseLattice==3) then        !FCC
            Np=NX*NY*NZ*4
            NN=Np+Nb
            ALLOCATE( CONF(3,NN) ,STAT=istat)
            ALLOCATE( RADII(NN) ,STAT=istat)
-         endif
-         if(useDEM) then 
+        endif
+
+        if(useDEM) then 
             ALLOCATE( CONF_DEM(3,Np),STAT=istat)
-         endif
-       CLOSE(11)
+        endif
+        CLOSE(11)
       ELSE
-       WRITE(0,*) "error: no initial_config.dat file " &
-         // "present in this folder"
-       WRITE(0,*) "        Please provide one"
-       CALL EXIT()
+         WRITE(0,*) "error: no initial_config.dat file " &
+           // "present in this folder"
+         WRITE(0,*) "        Please provide one"
+         CALL EXIT()
       ENDIF
 
       END subroutine INITIAL_SIZE

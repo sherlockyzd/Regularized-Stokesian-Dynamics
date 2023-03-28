@@ -630,6 +630,7 @@
               else
                 Filament_tau_now( :, jj) = conf(:,jj+1)-conf(:,jj)
               endif
+              write(*,*) "Filament_tau_base====",jj,Filament_tau_now( :, jj)
               Filament_q(jj)=quat(1.0_8,0.0_8,0.0_8,0.0_8)
           end do
           index1(KK_fila)=num_fila_sum+1
@@ -699,16 +700,17 @@
                 !internal Force
                 
                 tauF=dr/ds!(tauj1+tauj)/dL
+                write(*,*) "dr,ds,angle===",dr(:),ds,angle(:)
                 F0=qrot_inverse(q_mid,tauF)
                 F0=F0-Filament_tau_base(:,jj)/ds
                 F1=0.0_8
                 F1(1)=F0(1)*EA;
                 F1(2)=F0(2)*GA;F1(3)=F0(3)*GA
                 internal_force=qrot(q_mid,F1)
-                write(*,*) 'MMMMMMMMMMMMMMM===========',M(:)!,GI,EI
-                write(*,*) 'internal_torque===========',internal_torque(:)
-                write(*,*) 'FFFFFFFFFFFFFFF===========',F1(:)
-                write(*,*) 'internal_Force ===========',internal_force(:)
+                write(*,*) 'index_filament,MMMMMMMMMMMMMMM===========',jj,M(:)!,GI,EI
+                write(*,*) 'index_filament,internal_torque===========',jj,internal_torque(:)
+                write(*,*) 'index_filament,FFFFFFFFFFFFFFF===========',jj,F1(:)
+                write(*,*) 'index_filament,internal_Force ===========',jj,internal_force(:)
 
                 Filament_internal_force_torque( 3*(jj-1)+1:3*jj) = Filament_internal_force_torque( 3*(jj-1) &
                   & +1:3*jj) +internal_force(:)
@@ -810,9 +812,9 @@
           Filament_tau_now(:,ii)=qrot(Filament_q(ii),Filament_tau_base(:,ii))
         enddo
 
-          forall(ii=1:Nfilament,jj=1:3)
-            CONF(jj,ii)=CONF(jj,ii)+DT_DEM*U_pos(3*(ii-1)+jj)
-          end forall
+        forall(ii=1:Nfilament,jj=1:3)
+          CONF(jj,ii)=CONF(jj,ii)+DT_DEM*U_pos(3*(ii-1)+jj)
+        end forall
     else
         !filament_implicit_solve(Nfilament,Filament_X1_now,Filament_X1_past,Filament_U1_now,Filament_tau_now, &
         !    & Filament_Lie_algebra_now,Filament_Interal_force,Fe,Filament_conf_now,Filament_conf_past,U_pos,Filament_q)

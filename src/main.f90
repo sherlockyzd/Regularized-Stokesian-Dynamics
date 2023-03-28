@@ -28,7 +28,8 @@
   INTEGER K_time,iLb,NLB,thread_id,status,I,J
   REAL*8 T,DT,yeta_mu(5),GAMMAangle,ompstart,ompend
   !REAL*8 SijN(5*NN)
-  REAL*8,ALLOCATABLE :: U_pos(:),SijN(:)
+  REAL*8,ALLOCATABLE :: U_pos(:),SijN(:),U_pos_swimer(:),U_pos_filament(:)
+
 
   write(*,*) 'start-------------'
   call tic()
@@ -74,13 +75,27 @@
   ALLOCATE(SijN(5*NN),STAT=status)
   U_pos=0.0_8
   CALL INITIAL_CONF()
-
   CALL INITIAL_CONF_ALLOCATION()
+
   if(K_rb.ne.0)then
-    CALL rbmconn_Init(NN,CONF,RADII,U_pos,conf_rb,U_par_rb,q_rb)
-  elseif(F_rb.ne.0)then
-    CALL filament_Init(NN,CONF,RADII,U_pos)
+    ALLOCATE(U_pos_swimer(6*Nswimer),STAT=status) 
+    CALL rbmconn_Init(Nswimer,CONF(:,1:Nswimer),RADII(1:Nswimer),U_pos_swimer,conf_rb,U_par_rb,q_rb)
   endif
+
+  if(F_rb.ne.0)then
+    ALLOCATE(U_pos_filament(6*Nfilament),STAT=status) 
+    CALL filament_Init(Nfilament,CONF(:,Nswimer+1:Nswimer+Nfilament), &
+      & RADII(Nswimer+1:Nswimer+Nfilament),U_pos_filament)
+  endif
+
+  if(Nswimer.ne.0.and.Nfilament.ne.0) then
+    call subToAll_particle(NN,Nswimer,Nfilament,U_pos_swimer,U_pos_filament,U_pos)
+  elseif(Nswimer.ne.0.and.Nfilament.eq.0) then
+    U_pos(1:6*Nswimer)=U_pos_swimer
+  elseif(Nswimer.eq.0.and.Nfilament.ne.0) then
+    U_pos(1:6*Nfilament)=U_pos_filament
+  endif
+
 
   if(boundary) then
     call VMD_WRITE_BDY(CONF,T,RADII)
@@ -197,9 +212,9 @@
 
       write(*,*)'T=========================',T
 
-      if(isnan(U_pos(2))) then 
-       write(*,*) "U_pos must be nan",U_pos(1:3)
-       stop
+      if(isnan(U_pos(2)).or.abs(U_pos(2)).gt.1.0_8) then 
+       write(*,*) "U_pos has error",U_pos(1:3)
+       call exit()
       endif
       !write(*,*)'LR=',LR
       !write(*,*)'LI=',LI
@@ -212,6 +227,8 @@
     if(allocated(RADII)) DEALLOCATE( RADII)
     if(allocated(RADIIBDY)) DEALLOCATE( RADIIBDY)
     if(allocated(U_pos)) DEALLOCATE( U_pos)
+    if(allocated(U_pos_swimer)) DEALLOCATE( U_pos_swimer)
+    if(allocated(U_pos_filament)) DEALLOCATE( U_pos_filament)
     if(allocated(Floc_index)) DEALLOCATE(Floc_index)
 
     CALL END_CONF_DEALLOCATION()

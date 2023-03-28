@@ -23,14 +23,14 @@
 !****************************************************************
 
 
-    subroutine new_conf_swim(NN,conf,T,U_par_rb,conf_rb,q_rb)
+    subroutine new_conf_swim(Nswimer,conf,T,U_par_rb,conf_rb,q_rb)
     IMPLICIT NONE
-    INTEGER,intent(in)::NN
+    INTEGER,intent(in)::Nswimer
     REAL*8,intent(in):: T!,U_pos(6*NN)!,RADII(NN)
     real*8,intent(in):: U_par_rb(6*K_rb)
     real*8,intent(inout):: conf_rb(3,K_rb)
     type(quaternion),intent(inout)::q_rb(K_rb)
-    real*8,intent(out):: CONF(3,NN)
+    real*8,intent(out):: CONF(3,Nswimer)
 
 
     integer :: ii, jj!, jj2, kk, ll, mm,num_rb
@@ -54,10 +54,10 @@
          ENDDO
       endif
 
-      call conf_rb2conf(NN,conf_rb,conf,q_rb)
+      call conf_rb2conf(Nswimer,conf_rb,conf,q_rb)
 
       if(simplePeriod) then
-         DO ii = 1, NN
+         DO ii = 1, Nswimer
           CALL PERIOD_CORRECTION(conf(:,ii),LB,T)
          ENDDO
       endif
