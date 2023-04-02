@@ -184,10 +184,9 @@
       ENDIF
 
       CALL INIT_u_bg()
-      !if(BROWN) then
-        CALL STEPPER_Stokesian(CONF,RADII,DT,T,yeta_mu,U_pos,SijN)
-      !else
-
+      
+      CALL STEPPER_Stokesian(CONF,RADII,DT,T,yeta_mu,U_pos,SijN)
+    
       IF (mod(K_time,K_WRITE) .eq. 0) then
         write(20,"(12ES24.15)") T/lambda_time,yeta_mu(:),LB(1),frequency,GAMMA,GAMMAangle
       ENDIF

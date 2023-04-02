@@ -1,5 +1,6 @@
   Module filament_solve_Jacobian
   use quaternions
+  use gmres_mod_gmres
   use TENSORS,only:kDirac
   use method,only:FTS_method,simplePeriod
   ! USE CONFIG,only:u_bg,omega_bg,omegaT,Eij   ! CONF,POLY_LEN
@@ -50,6 +51,8 @@
   Lie_algebra_now=Lie_algebra_next
   do ii=1,Nfilament
     U_now(3*(ii-1)+1:3*ii)=(conf_now(:,ii)-conf_past(:,ii))/DT_DEM
+    write(*,*) 'U_now(ii)==',ii,U_now(3*(ii-1)+1:3*ii)
+    write(*,*) 'conf_now(ii)==',ii,conf_now(:,ii)
   enddo
   U_now(3*Nfilament+1:6*Nfilament)=omega_next
 
@@ -129,15 +132,14 @@
   type(quaternion),intent(out):: q_next(Nfilament)
   real*8,intent(inout)::Yk_next(6*Nfilament)
 
-  integer::ii,jj
-  real*8:: dYk_norm,fy_norm
+  integer::ii,jj,iter_gmres,nb
+  real*8:: dYk_norm,fy_norm,res
   real*8:: dYk(6*Nfilament),filament_Fy(6*Nfilament),Ck(6*Nfilament),Dk(6*Nfilament),jac_mat(6*Nfilament,6*Nfilament)
   real*8:: Jacobian_filament(6*Nfilament,6*Nfilament),CDk_sum(6*Nfilament,6*Nfilament),dk_mat(6*Nfilament,6*Nfilament)
   
 
   Ck=0.0_8;Dk=0.0_8;CDk_sum=0.0_8
   do ii=1,iter
-  write(*,*) "iter==================",ii
     call Yk_To_sub(Nfilament,Yk_next,X1_next,Inertial_lamda,Lie_algebra_next)
     call Lie_algebra_To_q(Nfilament,q_now,Lie_algebra_next,q_next)
     call q_To_tau(Nfilament,q_next,tau_next)
@@ -150,6 +152,7 @@
                     & Inertial_torque,Fe,conf_now,conf_past,conf_next,U_now,omega_next,filament_Fy)
     fy_norm=sqrt(sum(filament_Fy**2))/Nfilament
     if(fy_norm.lt.error)then
+       write(*,*) "iter==================",ii
        write(*,*) "fy_norm===",fy_norm
        write(*,*) "iter complete successs!!!!!!!!!!!!!!!!!!!!!"
        return
@@ -162,16 +165,21 @@
     CDk_sum=CDk_sum+matrix_mul77(Ck,Dk,6*Nfilament)
     jac_mat=Jacobian_filament+CDk_sum
 
-    call inverse_squarematrix(6*Nfilament,jac_mat,dk_mat)
-    dYk=-matmul(dk_mat,filament_Fy)
+    !call inverse_squarematrix(6*Nfilament,jac_mat,dk_mat)
+    !dYk=-matmul(dk_mat,filament_Fy)
+    call simplegmres(dYk,6*Nfilament,-filament_Fy,jac_mat,iter_gmres,nb,res)
     Yk_next=Yk_next+dYk
     dYk_norm=sqrt(sum(dYk**2))
     Ck=filament_Fy/dYk_norm;Dk=dYk/dYk_norm
 
   enddo
 
+  write(*,*) "iter==================",ii
   write(*,*) "fy_norm===",fy_norm
   write(*,*) "iter failed!!!!!!!!!!!!!!!!!!!!!"
+  if(fy_norm.gt.100.0_8)then
+     stop
+  endif
 
   end subroutine BDF_solver
 
@@ -226,7 +234,7 @@
   real*8,intent(in)::tau_now(3,Nfilament),Lie_algebra_next(3*Nfilament)
   real*8,intent(out)::Jacobian_filament(6*Nfilament,6*Nfilament)
 
-  integer::ii,jj,kk,mm,nn,index1_internal,index2_internal
+  integer::ii,jj,kk,mm,nn,KK_fila,ii_2,jj_2,num_fila,num_fila_sum
   real*8::Jacobian_11_filament(3*F_rb,3*F_rb),Jacobian_12_filament(3*F_rb,3*(Nfilament-F_rb))
   real*8::Jacobian_21_filament(3*(Nfilament-F_rb),3*F_rb),Jacobian_23_filament(3*(Nfilament-F_rb),3*Nfilament)
   real*8::Jacobian_22_filament(3*(Nfilament-F_rb),3*(Nfilament-F_rb))
@@ -242,13 +250,110 @@
   Jacobian_32_filament=0.0_8
   Jacobian_33_filament=0.0_8
 
-  do ii=1,F_rb
-    index1_internal=index1(ii)-ii+1
+  do KK_fila=1,F_rb
+    ii=KK_fila
     Jacobian_11_filament(3*(ii-1)+1:3*(ii),3*(ii-1)+1:3*(ii))=kDirac
-    jj=index1_internal
+    jj=index1(KK_fila)-KK_fila+1
     Jacobian_12_filament(3*(ii-1)+1:3*(ii),3*(jj-1)+1:3*(jj))=-2.0_8/3.0_8*DT_DEM*DT_DEM/mass_par*kDirac
   enddo
 
+
+  num_fila_sum=0
+  do  KK_fila=1,F_rb
+      jj=KK_fila
+      num_fila=Filament_num(KK_fila)
+      do mm = 2, num_fila
+        ii_2=mm+num_fila_sum
+        ii=ii_2- KK_fila
+        Jacobian_21_filament(3*(ii-1)+1:3*(ii),3*(jj-1)+1:3*(jj))=kDirac
+      enddo
+      num_fila_sum=num_fila_sum+num_fila
+  enddo
+
+
+  num_fila_sum=0
+  do  KK_fila=1,F_rb
+      num_fila=Filament_num(KK_fila)
+      do mm = 2, num_fila
+        ii_2=mm+num_fila_sum
+        ii=ii_2- KK_fila
+        jj=ii
+        Jacobian_22_filament(3*(ii-1)+1:3*(ii),3*(jj-1)+1:3*(jj))=-2.0_8/3.0_8*DT_DEM*DT_DEM/mass_par*kDirac
+        if(mm.lt.num_fila) then
+          jj=ii+1
+          Jacobian_22_filament(3*(ii-1)+1:3*(ii),3*(jj-1)+1:3*(jj))=2.0_8/3.0_8*DT_DEM*DT_DEM/mass_par*kDirac
+        endif
+      enddo
+      num_fila_sum=num_fila_sum+num_fila
+  enddo
+
+
+
+  num_fila_sum=0
+  do  KK_fila=1,F_rb
+      num_fila=Filament_num(KK_fila)
+      do mm = 2, num_fila
+        ii_2=mm+num_fila_sum
+        ii=ii_2- KK_fila
+        do jj=1,Nfilament
+          if(jj.lt.ii_2.and.jj.gt.num_fila_sum+1) then
+            Jacobian_23_filament(3*(ii-1)+1:3*(ii),3*(jj-1)+1:3*(jj))=Mat_inv_Cross(tau_next(:,jj))
+          elseif(jj.eq.ii_2)then
+            Jacobian_23_filament(3*(ii-1)+1:3*(ii),3*(jj-1)+1:3*(jj))=0.5_8*Mat_inv_Cross(tau_next(:,jj))
+          elseif(jj.lt.ii_2.and.jj.eq.num_fila_sum+1)then
+            Jacobian_23_filament(3*(ii-1)+1:3*(ii),3*(jj-1)+1:3*(jj))=0.5_8*Mat_inv_Cross(tau_next(:,jj))
+          else
+            Jacobian_23_filament(3*(ii-1)+1:3*(ii),3*(jj-1)+1:3*(jj))=0.0_8
+          endif
+        enddo
+      enddo
+      num_fila_sum=num_fila_sum+num_fila
+  enddo
+
+  num_fila_sum=0
+  do  KK_fila=1,F_rb
+      num_fila=Filament_num(KK_fila)
+      do mm = 1, num_fila
+        ii=mm+num_fila_sum
+        call Jacobian_32_sub(tau_now(:,ii),Lie_algebra_next(3*(ii-1)+1:3*ii),Jacobian_sub)
+        if(mm.lt.num_fila.and.mm.gt.1) then
+          jj=ii-KK_fila+1
+          Jacobian_32_filament(3*(ii-1)+1:3*(ii),3*(jj-1)+1:3*(jj))=-1.0_8/3.0_8*DT_DEM*DT_DEM*Jacobian_sub
+          jj=ii-KK_fila
+          Jacobian_32_filament(3*(ii-1)+1:3*(ii),3*(jj-1)+1:3*(jj))=-1.0_8/3.0_8*DT_DEM*DT_DEM*Jacobian_sub
+        elseif(mm.eq.num_fila) then
+          jj=ii-KK_fila
+          Jacobian_32_filament(3*(ii-1)+1:3*(ii),3*(jj-1)+1:3*(jj))=-1.0_8/3.0_8*DT_DEM*DT_DEM*Jacobian_sub
+        elseif(mm.eq.1) then
+          jj=ii-KK_fila+1
+          Jacobian_32_filament(3*(ii-1)+1:3*(ii),3*(jj-1)+1:3*(jj))=-1.0_8/3.0_8*DT_DEM*DT_DEM*Jacobian_sub
+        endif
+      enddo
+      num_fila_sum=num_fila_sum+num_fila
+  enddo
+
+  do ii=1,Nfilament
+    jj=ii
+    call Jacobian_33_sub(omega_next(3*(ii-1)+1:3*ii),Lie_algebra_next(3*(ii-1)+1:3*ii),Jacobian_sub)
+    Jacobian_33_filament(3*(ii-1)+1:3*(ii),3*(jj-1)+1:3*(jj))=kDirac-1.0_8/3.0_8*DT_DEM*Jacobian_sub
+  enddo
+
+
+
+  Jacobian_filament(1:3*F_rb,1:3*F_rb)=Jacobian_11_filament
+  Jacobian_filament(1:3*F_rb,3*F_rb+1:3*Nfilament)  =Jacobian_12_filament
+  Jacobian_filament(3*F_rb+1:3*Nfilament,1:3*F_rb)=Jacobian_21_filament
+  Jacobian_filament(3*F_rb+1:3*Nfilament,3*F_rb+1:3*Nfilament)=Jacobian_22_filament
+  Jacobian_filament(3*F_rb+1:3*Nfilament,3*Nfilament+1:6*Nfilament)=Jacobian_23_filament
+  Jacobian_filament(3*Nfilament+1:6*Nfilament,3*F_rb+1:3*Nfilament)=Jacobian_32_filament
+  Jacobian_filament(3*Nfilament+1:6*Nfilament,3*Nfilament+1:6*Nfilament)=Jacobian_33_filament
+
+  !write(*,*) "det(Jacobian_filament)===============",det(Jacobian_filament)
+
+  end  subroutine Jacobian_filament_function
+
+
+#ifdef index1_internal
   do jj=1,F_rb
     index1_internal=index1(jj)-jj+1
     index2_internal=index1_internal+Filament_num(jj)-2
@@ -282,8 +387,6 @@
 
     enddo
   enddo
-
-
   do mm=1,F_rb
     index1_internal=index1(mm)-mm+1
     index2_internal=index1_internal+Filament_num(mm)-2
@@ -301,28 +404,7 @@
       endif
     enddo
   enddo
-
-  do ii=1,Nfilament
-    jj=ii
-    call Jacobian_33_sub(omega_next(3*(ii-1)+1:3*ii),Lie_algebra_next(3*(ii-1)+1:3*ii),Jacobian_sub)
-    Jacobian_33_filament(3*(ii-1)+1:3*(ii),3*(jj-1)+1:3*(jj))=kDirac-1.0_8/3.0_8*DT_DEM*Jacobian_sub
-  enddo
-
-
-
-  Jacobian_filament(1:3*F_rb,1:3*F_rb)=Jacobian_11_filament
-  Jacobian_filament(1:3*F_rb,3*F_rb+1:3*Nfilament)  =Jacobian_12_filament
-  Jacobian_filament(3*F_rb+1:3*Nfilament,1:3*F_rb)=Jacobian_21_filament
-  Jacobian_filament(3*F_rb+1:3*Nfilament,3*F_rb+1:3*Nfilament)=Jacobian_22_filament
-  Jacobian_filament(3*F_rb+1:3*Nfilament,3*Nfilament+1:6*Nfilament)=Jacobian_23_filament
-  Jacobian_filament(3*Nfilament+1:6*Nfilament,3*F_rb+1:3*Nfilament)=Jacobian_32_filament
-  Jacobian_filament(3*Nfilament+1:6*Nfilament,3*Nfilament+1:6*Nfilament)=Jacobian_33_filament
-
-  !write(*,*) "det(Jacobian_filament)===============",det(Jacobian_filament)
-
-  end  subroutine Jacobian_filament_function
-
-
+#endif
 
   subroutine Jacobian_32_sub(tau_now,Lie_algebra_next,Jacobian_sub)
   IMPLICIT NONE
@@ -404,8 +486,8 @@
   do  KK_fila=1,F_rb
       num_fila=Filament_num(KK_fila)
       do ii = 2, num_fila
-        index_Y2=index_Y2+1
         jj=ii+num_fila_sum
+        index_Y2=jj- KK_fila
         if(ii.ne.num_fila)then
           filament_Fy(3*F_rb+3*(index_Y2-1)+1:3*F_rb+3*index_Y2)=conf_next(:,jj) &
         & -4.0_8/3.0_8*conf_now(:,jj)+1.0_8/3.0_8*conf_past(:,jj) &
@@ -422,7 +504,7 @@
       num_fila_sum=num_fila_sum+num_fila
   enddo
 
-  write(*,*) 'Nfilament==',Nfilament,'index_Y2==',index_Y2
+ ! write(*,*) 'Nfilament==',Nfilament,'index_Y2==',index_Y2
 
 
 
@@ -544,15 +626,18 @@
   real*8,intent(in) ::Inertial_lamda(3*Nfilament)
   real*8,intent(out)::exactInertial_lamda(3*(Nfilament-F_rb))
 
-  integer::ii,indexstart,indexend,length
+  integer::ii,ii_exact,KK_fila,num_fila,num_fila_sum,mm
 
   exactInertial_lamda=0.0_8
-  indexstart=1
-  do ii=1,F_rb
-    length=Filament_num(ii)-1
-    indexend=indexstart+length-1
-    exactInertial_lamda(3*(indexstart-1)+1:3*indexend)=Inertial_lamda(3*(index1(ii)-1)+1:3*(index1(ii)-1+length))
-    indexstart=indexend+1
+  num_fila_sum=0
+  do  KK_fila=1,F_rb
+      num_fila=Filament_num(KK_fila)
+      do mm = 1, num_fila-1
+        ii=mm+num_fila_sum
+        ii_exact=ii-KK_fila+1
+        exactInertial_lamda(3*(ii_exact-1)+1:3*ii_exact)=Inertial_lamda(3*(ii-1)+1:3*ii)
+      enddo
+      num_fila_sum=num_fila_sum+num_fila
   enddo
 
   end  subroutine Find_exactInertial_lamda
@@ -562,22 +647,25 @@
   real*8,intent(in) ::exactInertial_lamda(3*(Nfilament-F_rb))
   real*8,intent(out)::Inertial_lamda(3*Nfilament)
 
-  integer::ii,indexstart,indexend,length
+  integer::ii,ii_exact,KK_fila,num_fila,num_fila_sum,mm
 
   Inertial_lamda=0.0_8
-  indexstart=1
-  do ii=1,F_rb
-    length=Filament_num(ii)-1
-    indexend=indexstart+length-1
-    Inertial_lamda(3*(index1(ii)-1)+1:3*(index1(ii)-1+length))=exactInertial_lamda(3*(indexstart-1)+1:3*indexend)
-    indexstart=indexend+1
+  num_fila_sum=0
+  do  KK_fila=1,F_rb
+      num_fila=Filament_num(KK_fila)
+      do mm = 1, num_fila-1
+        ii=mm+num_fila_sum
+        ii_exact=ii-KK_fila+1
+        Inertial_lamda(3*(ii-1)+1:3*ii)=exactInertial_lamda(3*(ii_exact-1)+1:3*ii_exact)
+      enddo
+      num_fila_sum=num_fila_sum+num_fila
   enddo
-
   end  subroutine exactToInertial_lamda
 
   end Module filament_solve_Jacobian
 
 
+!*******************************************************************************************
 
   Module filament_math
    use quaternions
@@ -596,9 +684,6 @@
    !,new_U_par_filament,new_conf_filament,new_q_filament
 
    contains
-
-!****************************************************************
-
 
     subroutine filament_Init(Nfilament,CONF,RADII,U_pos)
     IMPLICIT NONE
@@ -741,7 +826,7 @@
 
 
 
-    subroutine new_U1_filament(Nfilament,RADII,Ftotal,U_pos)
+    subroutine filament_explicit_solve(Nfilament,RADII,Ftotal,U_pos)
     IMPLICIT NONE
     INTEGER,intent(in)::Nfilament
     REAL*8,intent(in):: RADII(Nfilament),Ftotal(6*Nfilament)
@@ -773,7 +858,7 @@
         !U_pos(3*(ii-1)+1:3*ii)=Filament_U1(3*(KK_fila-1)+1:3*KK_fila)
     !end do            
 
-    end subroutine new_U1_filament
+    end subroutine filament_explicit_solve
 
 
 

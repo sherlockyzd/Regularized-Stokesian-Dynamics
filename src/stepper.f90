@@ -263,7 +263,7 @@
         if(F_rb.ne.0) then
             if(.not.solve_implicit) then
               write(*,*) 'filament_____using EXPLICIT'
-              call new_U1_filament(Nfilament,RADII(1:Nfilament),Ftotal_filament,U_pos_filament)
+              call filament_explicit_solve(Nfilament,RADII(Nswimer+1:Nswimer+Nfilament),Ftotal_filament,U_pos_filament)
             else
               write(*,*) 'filament_____using IMPLICIT'
               !Filament_U_now=U_pos

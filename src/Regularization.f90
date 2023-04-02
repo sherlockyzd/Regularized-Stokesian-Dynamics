@@ -66,8 +66,8 @@
        !IF(YY.LE.LOGERR) THEN
         DIST=SQRT( SUM(RN**2))
         !kapa=sqrt(pai)/3.0_8/(1.5_8*(aaI+aaJ)-DIST)
-        !kapa=sqrt(pai)/3.0_8/(abs((aaI+aaJ)-DIST))
-        kapa=sqrt(pai)/3.0_8*2.0_8**((pai/(6.0_8*phi))**1.0_8/3.0_8)
+        kapa=sqrt(pai)/3.0_8/(abs((aaI+aaJ)-DIST))
+        !kapa=sqrt(pai)/3.0_8*2.0_8**((pai/(6.0_8*phi))**1.0_8/3.0_8)
 
         call Init_E_def(kapa,dist,E_def)
         call Init_erf1(kapa,dist,E_def,erf1)
