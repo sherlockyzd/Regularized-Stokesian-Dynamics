@@ -21,7 +21,8 @@
   use rb_conglomerate
   use conglomerate,only:rbmconn_Init
   use filament
-  use filament_math
+  use filament_solve_Implicit_method2
+  use filament_solve_Explicit
 
 
   implicit none
@@ -46,7 +47,7 @@
   call dimentionless_translate()
   CALL INIT_DIM_WRITE()
 
-
+  filament_implicit_method=2
   usebond=.False.
   thread_id = OMP_GET_MAX_THREADS()
   PRINT *, "max processos: ", thread_id
@@ -83,9 +84,14 @@
   endif
 
   if(F_rb.ne.0)then
-    ALLOCATE(U_pos_filament(6*Nfilament),STAT=status) 
-    CALL filament_Init(Nfilament,CONF(:,Nswimer+1:Nswimer+Nfilament), &
-      & RADII(Nswimer+1:Nswimer+Nfilament),U_pos_filament)
+    ALLOCATE(U_pos_filament(6*Nfilament),STAT=status)
+    if(filament_implicit_method.ne.2) then
+      CALL filament_Init_explicit(Nfilament,CONF(:,Nswimer+1:Nswimer+Nfilament), &
+        & RADII(Nswimer+1:Nswimer+Nfilament),U_pos_filament)
+    else
+      CALL filament_Init_Implicit(Nfilament,CONF(:,Nswimer+1:Nswimer+Nfilament), &
+        & RADII(Nswimer+1:Nswimer+Nfilament),U_pos_filament)
+    endif
   endif
 
   if(Nswimer.ne.0.and.Nfilament.ne.0) then

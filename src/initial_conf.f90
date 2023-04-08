@@ -14,6 +14,8 @@
   use tensors,only:pai
   use rb_conglomerate
   use filament
+  use filament_implicit2
+  use filament_explicit_or_implicit1
 
   implicit none
   private
@@ -43,6 +45,9 @@
       endif
 
       if(F_rb.ne.0)then
+
+        !ALLOCATE (Filament_obj(F_rb) ,STAT=status)
+        if(filament_implicit_method.ne.2) then
         ALLOCATE (index1(F_rb) ,STAT=status)
         ALLOCATE (Filament_conf_past(3,Nfilament) ,STAT=status)
         ALLOCATE (Filament_conf_now(3,Nfilament) ,STAT=status)
@@ -53,10 +58,11 @@
         ALLOCATE (Filament_X1_now(3*F_rb) ,STAT=status)
         ALLOCATE (Filament_X1_past(3*F_rb) ,STAT=status)
         !ALLOCATE (Filament_Inertial_lambda(3*Nfilament),STAT=status)
-        ALLOCATE (Filament_Interal_force(6*Nfilament),STAT=status)
+        !ALLOCATE (Filament_Interal_force(6*Nfilament),STAT=status)
         ALLOCATE (Filament_Lie_algebra_now(3*Nfilament),STAT=status)
         !ALLOCATE (Filament_Lie_algebra_next(3*Nfilament),STAT=status)
         ALLOCATE (Filament_q(Nfilament) ,STAT=status)
+        endif
       endif
 
     end subroutine INITIAL_CONF_ALLOCATION
@@ -75,6 +81,7 @@
       if(allocated(conf_rb))  DEALLOCATE( conf_rb)
   endif
   if(F_rb.ne.0)then
+      if(allocated(Filament_obj)) DEALLOCATE(Filament_obj)
       if(allocated(Filament_num)) DEALLOCATE(Filament_num)
       if(allocated(index1)) DEALLOCATE(index1)
       if(allocated(Filament_conf_past))  DEALLOCATE( Filament_conf_past)
@@ -87,7 +94,7 @@
       !if(allocated(Filament_X1_next))  DEALLOCATE( Filament_X1_next)
       if(allocated(Filament_X1_now))  DEALLOCATE( Filament_X1_now)
       if(allocated(Filament_X1_past))  DEALLOCATE( Filament_X1_past)
-      if(allocated(Filament_Interal_force))  DEALLOCATE( Filament_Interal_force)
+      !if(allocated(Filament_Interal_force))  DEALLOCATE( Filament_Interal_force)
       !if(allocated(Filament_Inertial_torque))  DEALLOCATE( Filament_Inertial_torque)
       if(allocated(Filament_Lie_algebra_now)) DEALLOCATE(Filament_Lie_algebra_now)
       !if(allocated(Filament_Lie_algebra_next)) DEALLOCATE(Filament_Lie_algebra_next)
@@ -107,7 +114,7 @@
        OPEN(10,FILE='control_file.dat')
        read(10,*) correction_method
        read(10,*) FTS_method 
-       read(10,*) solve_implicit      
+       read(10,*) filament_solve_implicit      
        read(10,*) uselub
        read(10,*) useDEM 
        read(10,*) usecollision
@@ -392,8 +399,9 @@
            READ(11,*) F_rb,Nfilament
            write(*,*) 'F_rb,Nfilament====',F_rb,Nfilament
            if(F_rb.ne.0)then
+             ALLOCATE (Filament_obj(F_rb) ,STAT=istat)
              ALLOCATE (Filament_num(F_rb) ,STAT=istat)
-             READ(11,*) Filament_num(:)
+             READ(11,*) (Filament_num(i),i=1,F_rb)
              if(sum(Filament_num(:)).eq.Nfilament) then
                write(*,*) 'Filament_num',Filament_num(:) 
               else
@@ -621,6 +629,8 @@
       !  write(*,*) CONF(1,Np+I),CONF(2,Np+I),CONF(3,Np+I),RADII(I)
       !enddo
       !stop
+
+      
       END SUBROUTINE INITIAL_CONF  
 
 !********************************************************

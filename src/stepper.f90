@@ -16,8 +16,11 @@
   use conglomerate
   use rb_conglomerate,only:K_rb,conf_rb,U_par_rb,q_rb
   use filament
-  use filament_math
-  use filament_solve_Jacobian
+  use filament_explicit_or_implicit1
+  use filament_implicit2
+  use filament_solve_Explicit
+  use filament_solve_Implicit_method1
+  use filament_solve_Implicit_method2
   implicit none
   private
 
@@ -161,9 +164,23 @@
 
 
       if(F_rb.ne.0) then
-        U_pos_filament(1:3*Nfilament)=U_pos(3*Nswimer+1:3*Nswimer+3*Nfilament)
-        U_pos_filament(3*Nfilament+1:6*Nfilament)=U_pos(3*NN+3*Nswimer+1:3*NN+3*Nswimer+3*Nfilament)
-        call new_conf_filament(Nfilament,conf(:,Nswimer+1:Nswimer+Nfilament),T,U_pos_filament)
+        if(.not.filament_solve_implicit)then
+          U_pos_filament(1:3*Nfilament)=U_pos(3*Nswimer+1:3*Nswimer+3*Nfilament)
+          U_pos_filament(3*Nfilament+1:6*Nfilament)=U_pos(3*NN+3*Nswimer+1:3*NN+3*Nswimer+3*Nfilament)
+          call new_conf_explicit_filament(Nfilament,conf(:,Nswimer+1:Nswimer+Nfilament),T,U_pos_filament)
+        else
+          if(filament_implicit_method.ne.2)then
+              CONF=Filament_conf_now
+              if(simplePeriod) then
+                 DO i = 1, Nfilament
+                  CALL PERIOD_CORRECTION(conf(:,i),LB,T)
+                 ENDDO
+              endif
+          else
+            call new_conf_Implicit2_filament(Nfilament,conf,T)
+          endif
+        endif
+
         write(*,*) 'new_conf_filament_____filament_____filament_____okok'
       endif
 
@@ -210,7 +227,7 @@
       real*8 mu(5*NN,5*NN),APPR(6*NN,6*NN),U_add(6*NN)
       REAL*8 DU_1(6*NN),uo_bg(6*NN),Ftotal(6*NN)
       REAL*8 Ftotal_filament(6*Nfilament),U_pos_filament(6*Nfilament)
-      REAL*8 U_pos_swimer(6*Nswimer),Ftotal_swimer(6*Nswimer)
+      REAL*8 U_pos_swimer(6*Nswimer),Ftotal_swimer(6*Nswimer),Filament_Interal_force(6*Nfilament)
 
       integer I,J
 
@@ -227,8 +244,6 @@
         endif
         call arrangResist(NN,rfu,rfe,rse,RPP0,RPQ0,RQQ0,RPP,RPQ,RQQ)
 
-
-
         U_add=U_par
         U_add(1:3*NN)=U_add(1:3*NN)-u_brown
         if(FTS_method)then
@@ -237,8 +252,8 @@
          Fh = -matmul(RPP,U_add)
         endif
         do i=1,NN-Nb
-            write(*,*) 'i,Fhtotal===',i,Fh(3*(i-1)+1:3*i)
-            write(*,*) 'i,htorue ===',i,Fh(3*NN+3*(i-1)+1:3*NN+3*i)
+            write(*,*) 'i,Fhforce===',i,Fh(3*(i-1)+1:3*i)
+            write(*,*) 'i,Fhtorue===',i,Fh(3*NN+3*(i-1)+1:3*NN+3*i)
         enddo
         Ftotal = Fe+Fh
 
@@ -257,21 +272,21 @@
            call new_U_par_rb(Nswimer,CONF(:,1:Nswimer),RADII(1:Nswimer),Ftotal_swimer,U_pos_swimer,U_par_rb,q_rb)
            write(*,*) 'U_par_swimmer_____swimmer_____swimmer_____swimmer_____okok'
         endif
-           !do i=1,NN-Nb
-            !write(*,*) 'Ftotal(i)===',i,Ftotal(6*(i-1)+1),Ftotal(6*(i-1)+1),Ftotal(6*(i-1)+2),Ftotal(6*(i-1)+3)
-           !enddo
+           
         if(F_rb.ne.0) then
-            if(.not.solve_implicit) then
+            if(.not.filament_solve_implicit) then
               write(*,*) 'filament_____using EXPLICIT'
               call filament_explicit_solve(Nfilament,RADII(Nswimer+1:Nswimer+Nfilament),Ftotal_filament,U_pos_filament)
             else
-              write(*,*) 'filament_____using IMPLICIT'
-              !Filament_U_now=U_pos
-              call filament_implicit_solve(Nfilament,Filament_X1_now,Filament_X1_past,Filament_U1_now, &
-                & Filament_tau_now,Filament_Lie_algebra_now,Filament_Interal_force,Ftotal_filament, &
-                & Filament_conf_now,Filament_conf_past,U_pos,Filament_q)
-              !call filament_implicit_solve(Nfilament,X1_now,X1_past,U1_now,tau_now,Lie_algebra_now, &
-              !      & Internal_force,Fe,conf_now,conf_past,U_now,q_now)
+              if(filament_implicit_method.ne.2) then
+                write(*,*) 'filament_____using IMPLICIT filament_solve_Implicit_method1'
+                call filament_implicit_solve(Nfilament,Filament_X1_now,Filament_X1_past,Filament_U1_now, &
+                      & Filament_tau_now,Filament_Lie_algebra_now,Filament_Interal_force,Ftotal_filament, &
+                      & Filament_conf_now,Filament_conf_past,U_pos_filament,Filament_q)
+              else
+                write(*,*) 'filament_____using IMPLICIT filament_solve_Implicit_method2'
+                call filament_implicit_solve2(Nfilament,Filament_Interal_force,Ftotal_filament,U_pos_filament)
+              endif
             endif
             write(*,*) 'U_par_filament_____filament_____filament_____okok'
         endif
@@ -288,13 +303,7 @@
           U_pos(1:6*Nfilament)=U_pos_filament
         endif
          
-        !do i=1,NN-Nb
-         ! mass = pho_par*4.0_8/3.0_8*pai*RADII(i)**3
-         ! do j=1,3 
-            !DU_1=Ftotal*DT_DEM/mass_par
-           ! DU_1(3*NN+3*(i-1)+j)=Ftotal(3*NN+3*(i-1)+j)*DT_DEM/mass
-          !enddo
-        !enddo
+
         call arrangement(RPP,RPQ,RQQ,mu,NN)
         
         SijN_hyd=matmul(mu,EIN)
@@ -302,21 +311,16 @@
         call Rheology(CONF,RPQ,RPP,Fe_inter,SijN_FP)
 
         SijN_B=matmul(transpose(RPQ),UB)
-                !do i=1,NN-Nb
+       !do i=1,NN-Nb
          ! mass = pho_par*4.0_8/3.0_8*pai*RADII(i)**3
          ! do j=1,3 
             !DU_1=Ftotal*DT_DEM/mass_par
            ! DU_1(3*NN+3*(i-1)+j)=Ftotal(3*NN+3*(i-1)+j)*DT_DEM/mass
           !enddo
         !enddo
-        do i=1,NN-Nb
-          write(*,*) "U_pos====",i,U_pos(3*(i-1)+1:3*i)
-         ! mass = pho_par*4.0_8/3.0_8*pai*RADII(i)**3
-         ! do j=1,3 
-            !DU_1=Ftotal*DT_DEM/mass_par
-           ! DU_1(3*NN+3*(i-1)+j)=Ftotal(3*NN+3*(i-1)+j)*DT_DEM/mass
-          !enddo
-        enddo
+        !do i=1,NN-Nb
+         ! write(*,*) "U_pos====",i,U_pos(3*(i-1)+1:3*i)
+        !enddo
         write(*,*) 'check________STEPPER_UDEM__________Success!'
       end SUBROUTINE STEPPER_UDEM
 

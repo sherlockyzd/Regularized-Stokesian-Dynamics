@@ -240,8 +240,8 @@
       !use SYS_property,only:gravity
       use size
       use method,only:usecollision,wall_method,useDLVO,usebond
-      use filament,only:F_rb,solve_implicit
-      use filament_math,only:InternalForcesAndTorques
+      use filament
+      use filament_solve_Explicit,only:InternalForcesAndTorques
       IMPLICIT NONE
       real*8,intent(in)::RADII(NN),conf(3,NN),U_pos(6*NN)
       real*8,intent(out)::Fe(6*NN)!,SijN_FP(5*NN)
@@ -297,10 +297,10 @@
       !enddo  
       !write(*,*) "Nswimer,Nfilament==",Nswimer,Nfilament
 
-      if (F_rb.ne.0.and.(.not.solve_implicit))then
+      if (F_rb.ne.0.and.(.not.filament_solve_implicit))then
         call InternalForcesAndTorques(Nfilament,conf(:,Nswimer+1:Nswimer+Nfilament),Filament_internal_force_torque)
         !do ii=1,Nfilament
-        !  write(*,*) 'i,internal_Fe_not_elastic_torque===',ii,Filament_internal_force_torque(3*Nfilament+3*(ii-1)+1:3*Nfilament+3*ii)
+        write(*,*) 'using Explicit_internal_Fe_elastic_torque'
         !enddo     
         Fe(3*Nswimer+1:3*Nswimer+3*Nfilament)=Fe(3*Nswimer+1:3*Nswimer+3*Nfilament)+Filament_internal_force_torque(1:3*Nfilament)
         Fe(3*NN+3*Nswimer+1:3*NN+3*Nswimer+3*Nfilament)=Fe(3*NN+3*Nswimer+1:3*NN+3*Nswimer+3*Nfilament)+ &
@@ -310,6 +310,7 @@
       do ii=1,NN
           write(*,*) 'i,internal_Fe_torque===',ii,Fe(3*NN+3*(ii-1)+1:3*NN+3*ii)
       enddo  
+      write(*,*) 'check________source_inter_F__________Success!'
 
       end  SUBROUTINE source_inter_F
 

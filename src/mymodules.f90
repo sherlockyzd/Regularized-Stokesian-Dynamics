@@ -328,14 +328,14 @@
     if(qequal(q1,q0))then
       angle=0.0_8
     else
-      dq=qscal(1.0_8/qnorm(dq0) , dq0)
+      dq=qscal(1.0_8/(qnorm(dq0)+1e-6), dq0)
       coshalfsita=dq%r
       halfsita=acos(coshalfsita)
       sinhalfsita(1)=dq%i;sinhalfsita(2)=dq%j;sinhalfsita(3)=dq%k;
       nn=sinhalfsita/sqrt(sum(sinhalfsita**2))
       angle=2.0*halfsita*nn
-      write(*,*) 'angle=',angle(:)
     endif
+    !write(*,*) 'angle=',angle(:)
     end function qangle
 
 
@@ -572,8 +572,207 @@
 
     end module quaternions  
 
+!****************************************************************
+   Module filament_classdef
+   use quaternions
+   IMPLICIT NONE
+   !private
+   type,public:: filaments
+   !private
+   integer:: Nf
+   integer:: index_start,index_end
+   real*8:: X1_now(3)
+   real*8:: X1_past(3)
+   real*8:: X1_next(3)
+   real*8:: U1_now(3)
+   real*8,allocatable:: pos_now(:,:)
+   real*8,allocatable:: pos_past(:,:)
+   real*8,allocatable:: pos_next(:,:)
+   real*8,allocatable:: tau_now(:,:)
+   real*8,allocatable:: tau_base(:,:)
+   real*8,allocatable:: tau_next(:,:)
+   real*8,allocatable:: RADII(:)
+   real*8,allocatable:: Internal_lamda(:)
+   real*8,allocatable:: Internal_lamda_old(:)
+   real*8,allocatable:: Internal_torque(:)
+   real*8,allocatable:: Lie_algebra_now(:)
+   real*8,allocatable:: Lie_algebra_next(:)
+   real*8,allocatable:: Yk_next(:)
+   real*8,allocatable:: Fe_f(:)
+   real*8,allocatable:: U_now(:)
+   real*8,allocatable:: omega_now(:)
+   real*8,allocatable:: omega_next(:)
+   type(quaternion),allocatable ::q_now(:)
+   type(quaternion),allocatable ::q_next(:)
+   logical:: allocated=.false.
+
+   contains
+      procedure,public:: set_init=>filament_set_init
+      procedure,public:: sub_To_Yk=>filament_sub_To_Yk
+      !procedure,public:: Yk_To_sub=>filament_Yk_To_sub
+      FINAL::clean_filament
+
+   end type filaments
+
+   private::filament_set_init,filament_sub_To_Yk!,filament_Yk_To_sub!,filament_RobotArm
+
+   contains
+
+    subroutine filament_set_init(this,Nf,CONF,RADII,U_pos)
+    IMPLICIT NONE
+    class(filaments):: this
+    INTEGER,intent(in)::Nf
+    REAL*8,intent(in):: CONF(3,Nf),RADII(Nf)
+    real*8,intent(in):: U_pos(3*Nf)!,Omega_pos(3*Nf)
+
+    integer :: ii, jj!, KK_fila
+    integer :: istat
+    !integer ::num_fila_sum,num_fila
+    !real*8 :: Ixx, Iyy,Izz,RADII2
+    if(this%allocated) then
+      deallocate(this%pos_now, stat=istat)
+      deallocate(this%pos_past, stat=istat)
+      deallocate(this%pos_next, stat=istat)
+      deallocate(this%tau_now, stat=istat)
+      deallocate(this%tau_base, stat=istat)
+      deallocate(this%tau_next, stat=istat)
+      deallocate(this%RADII, stat=istat)
+      deallocate(this%Internal_lamda, stat=istat)
+      deallocate(this%Internal_lamda_old, stat=istat)
+      deallocate(this%Internal_torque, stat=istat)
+      deallocate(this%Lie_algebra_now, stat=istat)
+      deallocate(this%Lie_algebra_next, stat=istat)
+      deallocate(this%Yk_next, stat=istat)
+      deallocate(this%Fe_f, stat=istat)
+      deallocate(this%U_now, stat=istat)
+      deallocate(this%omega_now, stat=istat)
+      deallocate(this%omega_next, stat=istat)
+      deallocate(this%q_now, stat=istat)
+      deallocate(this%q_next, stat=istat)
+    end if
+
+    this%Nf=Nf
+    this%U1_now=U_pos(1:3)
+    this%X1_now= CONF(:,1)
+    this%X1_past= this%X1_now
+    
+
+    allocate(this%pos_now(3,Nf),stat=istat)
+    allocate(this%pos_past(3,Nf),stat=istat) 
+    allocate(this%pos_next(3,Nf),stat=istat)
+    allocate(this%tau_now(3,Nf),stat=istat)
+    allocate(this%tau_base(3,Nf),stat=istat)
+    allocate(this%tau_next(3,Nf),stat=istat)
+    allocate(this%RADII(Nf),stat=istat)
+    allocate(this%Internal_lamda(3*Nf),stat=istat)
+    allocate(this%Internal_lamda_old(3*Nf),stat=istat)
+    allocate(this%Internal_torque(3*Nf),stat=istat)
+    allocate(this%Lie_algebra_now(3*Nf),stat=istat)
+    allocate(this%Lie_algebra_next(3*Nf),stat=istat)
+    allocate(this%Yk_next(6*Nf),stat=istat)
+    allocate(this%Fe_f(6*Nf),stat=istat)
+    allocate(this%U_now(3*Nf),stat=istat)
+    allocate(this%omega_now(3*Nf),stat=istat)
+    allocate(this%omega_next(3*Nf),stat=istat)
+    allocate(this%q_now(Nf),stat=istat)
+    allocate(this%q_next(Nf),stat=istat)
+
+    this%allocated=.true.
+    this%pos_now=CONF
+    this%pos_past=this%pos_now
+    this%U_now=U_pos
+    this%RADII=RADII
+    this%tau_now=0.0_8
+    this%Lie_algebra_now=0.0_8
+
+    do jj = 1,Nf
+        if(jj.eq.Nf)then
+          this%tau_now( :, jj) = conf(:,jj)-conf(:,jj-1)
+        else
+          this%tau_now( :, jj) = conf(:,jj+1)-conf(:,jj)
+        endif
+        write(*,*) "set_Init: Filament_tau_base====",jj,this%tau_now( :, jj)
+        this%q_now(jj)=quat(1.0_8,0.0_8,0.0_8,0.0_8)
+    end do
+    this%tau_base=this%tau_now
+    this%Internal_lamda_old=0.0_8
+
+    end subroutine filament_set_init
+
+    subroutine filament_sub_To_Yk(this)
+    IMPLICIT NONE
+    class(filaments)::this
+    integer:: Nf
+    !real*8,intent(out)::Yk_next(6*Nf)
+    !real*8,intent(in):: X1_next(3),Inertial_lamda(3*Nf),Lie_algebra_next(3*Nf)
+    Nf=this%Nf
+    this%Yk_next(1:3)=this%X1_next
+    this%Yk_next(4:3*Nf)=this%Internal_lamda(1:3*(Nf-1))
+    this%Yk_next(3*Nf+1:6*Nf)=this%Lie_algebra_next
+    end subroutine filament_sub_To_Yk
 
 
+
+    subroutine clean_filament(this)
+    !IMPLICIT NONE
+    type(filaments)::this
+    integer::istat
+    write(*,*) "In finalizer ..."
+
+    if(this%allocated) then
+      deallocate(this%pos_now, stat=istat)
+      deallocate(this%pos_past, stat=istat)
+      deallocate(this%pos_next, stat=istat)
+      deallocate(this%tau_now, stat=istat)
+      deallocate(this%tau_base, stat=istat)
+      deallocate(this%tau_next, stat=istat)
+      deallocate(this%RADII, stat=istat)
+      deallocate(this%Internal_lamda, stat=istat)
+      deallocate(this%Internal_lamda_old, stat=istat)
+      deallocate(this%Internal_torque, stat=istat)
+      deallocate(this%Lie_algebra_now, stat=istat)
+      deallocate(this%Lie_algebra_next, stat=istat)
+      deallocate(this%Yk_next, stat=istat)
+      deallocate(this%Fe_f, stat=istat)
+      deallocate(this%U_now, stat=istat)
+      deallocate(this%omega_now, stat=istat)
+      deallocate(this%omega_next, stat=istat)
+      deallocate(this%q_now, stat=istat)
+      deallocate(this%q_next, stat=istat)
+    end if
+    end subroutine clean_filament
+  end Module filament_classdef 
+
+    MODULE filament  
+    implicit none
+    INTEGER F_rb,filament_implicit_method
+    INTEGER,ALLOCATABLE :: Filament_num(:)
+    REAL*8 ::Filament_Inertial_body_inverse(3,3),Filament_Inertial_body(3,3)
+    REAL*8 ::GI,EI,GA,EA
+    LOGICAL:: filament_solve_implicit
+    END MODULE filament
+
+
+    MODULE filament_implicit2
+    !use quaternions
+    use filament_classdef     
+    implicit none
+    type(filaments), ALLOCATABLE:: Filament_obj(:)
+    END MODULE filament_implicit2
+
+
+
+    MODULE filament_explicit_or_implicit1
+    use quaternions
+    implicit none
+    INTEGER,ALLOCATABLE :: index1(:)
+    REAL*8, ALLOCATABLE :: Filament_conf_past(:,:),Filament_conf_now(:,:)
+    REAL*8, ALLOCATABLE :: Filament_tau_base(:,:),Filament_tau_now(:,:)
+    REAL*8, ALLOCATABLE :: Filament_U1_now(:),Filament_X1_now(:),Filament_X1_past(:)
+    !REAL*8, ALLOCATABLE :: Filament_Interal_force(:)!,Filament_Inertial_torque(:)
+    REAL*8, ALLOCATABLE :: Filament_Lie_algebra_now(:)
+    type(quaternion), ALLOCATABLE:: Filament_q(:)
+    END MODULE filament_explicit_or_implicit1
 
 !****************************************************************
 
@@ -590,25 +789,7 @@
 
 
 !****************************************************************
-      MODULE filament
-      use quaternions     
-      implicit none
-      INTEGER F_rb
-      INTEGER,ALLOCATABLE :: Filament_num(:),index1(:)
-      REAL*8, ALLOCATABLE :: Filament_conf_past(:,:),Filament_conf_now(:,:)
-      REAL*8, ALLOCATABLE :: Filament_tau_base(:,:),Filament_tau_now(:,:)
-      REAL*8, ALLOCATABLE :: Filament_U1_now(:),Filament_X1_now(:),Filament_X1_past(:)
-      REAL*8, ALLOCATABLE :: Filament_Interal_force(:)!,Filament_Inertial_torque(:)
-      REAL*8, ALLOCATABLE :: Filament_Lie_algebra_now(:)
-      type(quaternion), ALLOCATABLE:: Filament_q(:)
-      logical::solve_implicit
-      REAL*8 ::Filament_Inertial_body_inverse(3,3),Filament_Inertial_body(3,3)
-      REAL*8 ::GI,EI,GA,EA
-      
-      !real*8 alphaX,betaY,gamaZ 
-      !LOGICAL useCongl
-      END MODULE filament   
-!****************************************************************
+
   module dimentionless
   use SYS_property
   use DLVO_property
