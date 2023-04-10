@@ -1,6 +1,6 @@
 2                        !0:no 1:YAMAKAWAcorrection 2:Regular_CORRECTION
 .false.                   !FTS_method
-.true.                   !solve_implicit
+.false.                   !solve_implicit
 .false.                   !use Lub
 .false.                  !use DEM
 .false.                   !usecollision
@@ -35,9 +35,9 @@
 1                        !collision_condition 0:per elastic 1:Viscoelastic 2:other
 .false.                  ! muCalculate
 0                        ! initial time
-2.0                        ! END TIME
-1.0e-4                    ! DT
-100                       ! WRITE FREQUENCY
+15.0                        ! END TIME
+5.0e-5                    ! DT
+10                       ! WRITE FREQUENCY
 1                        ! LJ EPS
 2                        ! LJ SIGMA
 5                        ! LJ CUT 

@@ -307,9 +307,9 @@
         & Filament_internal_force_torque(3*Nfilament+1:6*Nfilament)
       endif
 
-      do ii=1,NN
-          write(*,*) 'i,internal_Fe_torque===',ii,Fe(3*NN+3*(ii-1)+1:3*NN+3*ii)
-      enddo  
+      !do ii=1,NN
+      !    write(*,*) 'i,internal_Fe_torque===',ii,Fe(3*NN+3*(ii-1)+1:3*NN+3*ii)
+      !enddo  
       write(*,*) 'check________source_inter_F__________Success!'
 
       end  SUBROUTINE source_inter_F

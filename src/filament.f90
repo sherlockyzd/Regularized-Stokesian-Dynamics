@@ -85,11 +85,11 @@
     !write(*,*) "X1_next===",ii,filament_obj(ii)%X1_next(:)
     filament_obj(ii)%Lie_algebra_next=filament_obj(ii)%Lie_algebra_now
 
-    do jj=1,Nf
-       write(*,*) "Internal_torque=====",jj,filament_obj(ii)%Internal_torque(3*(jj-1)+1:3*jj)
-       write(*,*) "Internal_lamda_test=",jj,filament_obj(ii)%Internal_lamda(3*(jj-1)+1:3*jj)
+    !do jj=1,Nf
+    !   write(*,*) "Internal_torque=====",jj,filament_obj(ii)%Internal_torque(3*(jj-1)+1:3*jj)
+    !   write(*,*) "Internal_lamda_test=",jj,filament_obj(ii)%Internal_lamda(3*(jj-1)+1:3*jj)
      !write(*,*) "Lie_algebra_next====",jj,filament_obj(ii)%Lie_algebra_next(3*(jj-1)+1:3*jj)
-    enddo
+    !enddo
 
     call filament_obj(ii)%sub_To_Yk
 
@@ -482,7 +482,7 @@
       torque = qrot(q_mid,M)
 
       !write(*,*) 'MMMMMMMMMMMMMMM===========',M(:)
-      write(*,*) 'internal_torque===========',torque(:)
+      !write(*,*) 'internal_torque===========',torque(:)
 
       Internal_torque( 3*(jj-1)+1:3*jj) =torque(:)
       !Internal_force ( 3*(jj-1)+1:3*jj) =force(:)
@@ -1324,7 +1324,7 @@ end Module filament_solve_Implicit_method1
       Filament_Inertial_body( 3, 3 ) =Izz 
       Filament_Inertial_body_inverse=Filament_Inertial_body
       CALL MATREV(Filament_Inertial_body_inverse,3)
-
+      write(*,*) 'check________filament_Init_explicit__________Success!'
     end subroutine filament_Init_explicit
 
 

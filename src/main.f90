@@ -85,11 +85,11 @@
 
   if(F_rb.ne.0)then
     ALLOCATE(U_pos_filament(6*Nfilament),STAT=status)
-    if(filament_implicit_method.ne.2) then
-      CALL filament_Init_explicit(Nfilament,CONF(:,Nswimer+1:Nswimer+Nfilament), &
+    if(filament_solve_implicit.and.filament_implicit_method.eq.2) then
+      CALL filament_Init_Implicit(Nfilament,CONF(:,Nswimer+1:Nswimer+Nfilament), &
         & RADII(Nswimer+1:Nswimer+Nfilament),U_pos_filament)
     else
-      CALL filament_Init_Implicit(Nfilament,CONF(:,Nswimer+1:Nswimer+Nfilament), &
+      CALL filament_Init_explicit(Nfilament,CONF(:,Nswimer+1:Nswimer+Nfilament), &
         & RADII(Nswimer+1:Nswimer+Nfilament),U_pos_filament)
     endif
   endif

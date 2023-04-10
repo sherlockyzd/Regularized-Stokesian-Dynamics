@@ -105,10 +105,10 @@
          call lubmxcalc(NN,conf,rfu,rfe,rse)
         endif
 
-        do i=1,NN-Nb
-            write(*,*) 'i,FeFtotal===',i,Fe(3*(i-1)+1:3*i)
-            write(*,*) 'i,Fetorue====',i,Fe(3*NN+3*(i-1)+1:3*NN+3*i)
-        enddo
+        !do i=1,NN-Nb
+        !    write(*,*) 'i,FeFtotal===',i,Fe(3*(i-1)+1:3*i)
+        !    write(*,*) 'i,Fetorue====',i,Fe(3*NN+3*(i-1)+1:3*NN+3*i)
+        !enddo
 
         !if(T.gt.0.0_8.and.useDEMstepper) then
         if(useDEMstepper) then
@@ -251,10 +251,10 @@
         else
          Fh = -matmul(RPP,U_add)
         endif
-        do i=1,NN-Nb
-            write(*,*) 'i,Fhforce===',i,Fh(3*(i-1)+1:3*i)
-            write(*,*) 'i,Fhtorue===',i,Fh(3*NN+3*(i-1)+1:3*NN+3*i)
-        enddo
+        !do i=1,NN-Nb
+        !    write(*,*) 'i,Fhforce===',i,Fh(3*(i-1)+1:3*i)
+        !    write(*,*) 'i,Fhtorue===',i,Fh(3*NN+3*(i-1)+1:3*NN+3*i)
+        !enddo
         Ftotal = Fe+Fh
 
         if(Nswimer.ne.0.and.Nfilament.ne.0) then

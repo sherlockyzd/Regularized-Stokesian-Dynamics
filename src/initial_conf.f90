@@ -4,7 +4,7 @@
   USE SIZE
   use method
   use control
-  USE CONFIG         
+  USE CONFIG
   USE LATTICE_BASE
   USE FORCE_PAR      ! LJ
   use SYS_property
@@ -47,7 +47,8 @@
       if(F_rb.ne.0)then
 
         !ALLOCATE (Filament_obj(F_rb) ,STAT=status)
-        if(filament_implicit_method.ne.2) then
+        !if(filament_implicit_method.ne.2) then
+        if(.not.filament_solve_implicit.or.filament_implicit_method.eq.1) then
         ALLOCATE (index1(F_rb) ,STAT=status)
         ALLOCATE (Filament_conf_past(3,Nfilament) ,STAT=status)
         ALLOCATE (Filament_conf_now(3,Nfilament) ,STAT=status)
