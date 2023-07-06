@@ -1035,6 +1035,8 @@
       U_pos(3*NN+3*Nswimer+1:3*NN+3*Nswimer+3*Nfilament)=U_pos_filament(3*Nfilament+1:6*Nfilament)
       end subroutine subToAll_particle
 
+
+
       subroutine AllTosub_particle(NN,Nswimer,Nfilament,U_pos_swimer,U_pos_filament,U_pos)
       IMPLICIT NONE
       integer,intent(in)::NN,Nswimer,Nfilament

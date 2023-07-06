@@ -71,11 +71,12 @@
       LB0=LB0_list(length_Lb0-iLb+1)
   endif
   
-  CALL INITIAL_SIZE(T)
+  CALL INITIAL_SIZE()
   ALLOCATE(U_pos(6*NN),STAT=status) 
   ALLOCATE(SijN(5*NN),STAT=status)
   U_pos=0.0_8
-  CALL INITIAL_CONF()
+
+  CALL INITIAL_CONF(T,U_pos)
   CALL INITIAL_CONF_ALLOCATION()
 
   if(K_rb.ne.0)then
@@ -193,9 +194,11 @@
       
       CALL STEPPER_Stokesian(CONF,RADII,DT,T,yeta_mu,U_pos,SijN)
     
+    if(IsPeriod.and.FTS_method) then
       IF (mod(K_time,K_WRITE) .eq. 0) then
         write(20,"(12ES24.15)") T/lambda_time,yeta_mu(:),LB(1),frequency,GAMMA,GAMMAangle
       ENDIF
+    endif
 
 
 
@@ -217,7 +220,7 @@
 
       write(*,*)'T=========================',T
 
-      if(isnan(U_pos(2)).or.abs(U_pos(2)).gt.1.0_8) then 
+      if(isnan(U_pos(2))) then 
        write(*,*) "U_pos has error",U_pos(1:3)
        call exit()
       endif

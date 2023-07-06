@@ -120,7 +120,7 @@
                  cycle
               endif
 
-         pairwisebeta: do beta=alpha+1,NN
+        pairwisebeta: do beta=alpha+1,NN
 
         !if(alpha.gt.NN-Nb ) then
          ! write(*,*) 'boundayr pass-------------------------'
@@ -141,7 +141,7 @@
 
             IF(DMIN<=(aaI+aaJ)) THEN
               if(correction_method.ne.0) then
-                IF(DMIN<=(aaI+aaJ)) THEN
+                !IF(DMIN<=(aaI+aaJ)) THEN
                   write(*,*) "make overlap correction",alpha,beta,DMIN
                   !write(*,*) "position alpha",p_pos(1:3,alpha)
                   !write(*,*) "position beta",p_pos(1:3,beta)
@@ -152,7 +152,7 @@
                     call Regular_ROTNE_PRAGER_IJ(TTP,RRP,TRP,QQP_TR,GPQ_TR,HPQ_TR,R,aaI,aaJ)
                     write(*,*) 'make overlap_Regularization_CORRECTION',alpha,beta
                   endif
-                endif
+                !endif
               else
                 if(FTS_method)then
                   call ROTNE_PRAGER_IJ_FTS(TTP,RRP,TRP,QQP_TR,GPQ_TR,HPQ_TR,R,aaI,aaJ)
@@ -197,10 +197,10 @@
             end forall
           endif
     !*************************************************************
-            end do pairwisebeta
+        end do pairwisebeta
     end do pairwisealpha
 !$omp end do
-!$omp end parallel 
+!$omp end parallel
 
 
 !$omp parallel default(NONE)shared(grmobmx,a,b,c,g,h,m,NN,FTS_method,Hydrosave,Floc_index)&

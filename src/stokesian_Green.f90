@@ -127,7 +127,7 @@
       nondim_a=1.0_8/(6.0_8*aaI)
       nondim_a3=1.0_8/(6.0_8*aaI*aaI*aaI)
       TTP=0.0_8
-      RRP=0.D0
+      RRP=0.0_8
 
 
      DIST=SQRT( SUM(RN**2))
@@ -158,6 +158,9 @@
       enddo
      enddo
      RRP = 3.0_8*aai*aai*aai/8.0_8*RRPAA
+
+
+     
      TRP = aai*(3.0_8/4.0_8)*Rg+aai*aai*aai/8.0_8*D2_Rg
 
       TTP = (TTP)*nondim_a

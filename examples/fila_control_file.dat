@@ -1,11 +1,11 @@
-0                        !0:no 1:YAMAKAWAcorrection 2:Regular_CORRECTION
+2                        !0:no 1:YAMAKAWAcorrection 2:Regular_CORRECTION
 .false.                   !FTS_method
 .false.                   !solve_implicit
 .false.                   !use Lub
 .false.                  !use DEM
 .false.                   !usecollision
-.false.                   !useDEMstepper
-.true.                  !useGMRESmethod
+.true.                   !useDEMstepper
+.false.                  !useGMRESmethod
 .false.                  !Xshaer condition(error)
 .false.                   !Period condition Force(Ewald Summation)
 .false.                   ! simple Period box
@@ -14,30 +14,30 @@
 0                        ! IsCaseLattice 0:normal 1:SC 2:BCC 3:FCC
 1                        ! begin
 1                        ! interval
-4                        !NUM_THREADS
+5                        !NUM_THREADS
 5000                     !timestep(DEM) 
 1.d0                     !radii test
-1.0e-5                   !radii true
+1.5e-3                   !radii true
 9.81d0                    !g_gravity
 0.0 0.0 0.0              ! background Uvector
 0.0 0.0 0.0              ! background Omegavector
 0.0 0.0 0.0 0.0 0.0 0.0  ! background Einf11,Einf22,Einf33,Einf12,Einf13,Einf23
-1.0e-3                   !mu_f
-1000.0d0                  !pho_f
+48.0e-3                   !mu_f
+920.0d0                  !pho_f
 1.0d0                    ! Renolds number
 0.00d0                    !Gamma_alpha
 1.00E4                   !Young's Module(3.40E9)
 0.50                     !Poisson_ratio
 2000                     ! DEM:ksp(spring stiffness)ksp=EA/l  
 0.5                      ! DEM:erest 
-1600.0d0                 ! DEM:pho_par
+90.0d0                 ! DEM:pho_par
 1.E-4                    ! EWALD SUMMATION ERROR LINERR
 1                        !collision_condition 0:per elastic 1:Viscoelastic 2:other
 .false.                  ! muCalculate
 0                        ! initial time
-1                        ! END TIME
-1.0e-5                    ! DT
-5                       ! WRITE FREQUENCY
+15.0                        ! END TIME
+5.0e-5                    ! DT
+10                       ! WRITE FREQUENCY
 1                        ! LJ EPS
 2                        ! LJ SIGMA
 5                        ! LJ CUT 

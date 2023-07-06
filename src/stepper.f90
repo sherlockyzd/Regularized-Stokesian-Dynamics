@@ -92,10 +92,13 @@
 
 
       NT_DEMdo:do Nt=1,NT_DEM
-        call source_inter_F(conf,RADII,U_pos,Fe_inter)
+        Fe_inter=0.0_8
+        !call source_inter_F(conf,RADII,U_pos,Fe_inter)
         call source_body_F(conf,RADII,Fe_body)
+
         !do I=1,NN
-        !  write(*,*) Fe_body(3*(I-1)+1:3*I)
+          !write(*,*) Fe_body(3*(I-1)+1:3*I)
+           !write(*,*) Fe_inter(3*(I-1)+1:3*I)
         !enddo
         Fe=Fe_body + Fe_inter
         rfu=0.0_8
@@ -129,6 +132,10 @@
                & ,Fe_inter,SijN_FP,CONF,SijN_B)
             write(*,*) "Using STEPPER_NOGmres"
           endif
+          call INIT_uo_bg(conf,uo_bg)
+            !U_relative=0.0_8 !angular velocity
+          U_pos=U_relative+uo_bg!-u_brown
+
         endif
 
           
@@ -141,6 +148,11 @@
       
       !SijN=SijN_FP+SijN_hyd
       !SijN_FP=0.0_8
+      !do i=1,NN-Nb
+        !    write(*,*) 'i,FeFtotal===',i,Fe(3*(i-1)+1:3*i)
+        !    write(*,*) 'i,SijN_hyd====',i,SijN_hyd(5*(i-1)+1:5*i)
+        !    write(*,*) 'i,SijN_FP====',i,SijN_FP(5*(i-1)+1:5*i)
+      !enddo
       call yetamu_solve(APP,RPP,Fe,U_relative,RADII,SijN_hyd,SijN_FP,SijN_B,EIN,yeta_mu)
 
       write(*,*) 'check________STEPPER_Stokesian__________Success!'
@@ -158,6 +170,11 @@
 
 
       if(K_rb.ne.0) then
+        !do i=1,K_rb
+        !   write(*,*) 'i,U_par_rb===',i,U_par_rb(3*(i-1)+1:3*i)
+        !    write(*,*) 'i,Fetorue====',i,Fe(3*NN+3*(i-1)+1:3*NN+3*i)
+        !enddo
+
         call new_conf_swim(Nswimer,conf(:,1:Nswimer),T,U_par_rb,conf_rb,q_rb)
         write(*,*) 'new_conf_rb_rb_rb____okok'
       endif
@@ -182,34 +199,34 @@
         endif
 
         write(*,*) 'new_conf_filament_____filament_____filament_____okok'
-      endif
-
-      if(K_rb.eq.0.and.F_rb.eq.0) then
-        call INIT_uo_bg(conf,uo_bg)
-        U_pos=U_par+uo_bg
-        !call par_index_floc(CONF,radii)
-        !call U_BDY_CORR(U_pos)
-        if(.not.fix) then
-          DCONF_1=DT_DEM*U_pos(1:3*NN)
-
-          forall(i=1:NN-Nb,j=1:3)
-            CONF(j,i)=CONF(j,i)+DCONF_1(3*(i-1)+j)
-          end forall
-          if(simplePeriod) then
-             DO I = 1, Np
-              CALL PERIOD_CORRECTION(CONF(:,I),LB,T)
-             ENDDO
-             call INIT_uo_bg(conf,uo_bg)
-             !if(K_rb.ne.0)then
-             !   call  swim_uo_bg(NN,CONF,uo_bg)
-             !endif
-             U_pos=U_par+uo_bg
-          endif
         endif
-       ! call par_index_floc(CONF,radii)
-       ! call U_BDY_CORR(U_pos)
-       write(*,*) 'check________STEPPER_conf__________Success!'
-      endif
+
+        if(K_rb.eq.0.and.F_rb.eq.0) then
+          call INIT_uo_bg(conf,uo_bg)
+          U_pos=U_par+uo_bg
+          !call par_index_floc(CONF,radii)
+          !call U_BDY_CORR(U_pos)
+          if(.not.fix) then
+            DCONF_1=DT_DEM*U_pos(1:3*NN)
+
+            forall(i=1:NN-Nb,j=1:3)
+              CONF(j,i)=CONF(j,i)+DCONF_1(3*(i-1)+j)
+            end forall
+            if(simplePeriod) then
+               DO I = 1, Np
+                CALL PERIOD_CORRECTION(CONF(:,I),LB,T)
+               ENDDO
+               call INIT_uo_bg(conf,uo_bg)
+               !if(K_rb.ne.0)then
+               !   call  swim_uo_bg(NN,CONF,uo_bg)
+               !endif
+               U_pos=U_par+uo_bg
+            endif
+          endif
+          ! call par_index_floc(CONF,radii)
+          ! call U_BDY_CORR(U_pos)
+         write(*,*) 'check________STEPPER_conf__________Success!'
+        endif
 
       END SUBROUTINE STEPPER_conf
 
@@ -242,6 +259,7 @@
         else
          call MobToResist_FT(APP,NN,RPP0)
         endif
+
         call arrangResist(NN,rfu,rfe,rse,RPP0,RPQ0,RQQ0,RPP,RPQ,RQQ)
 
         U_add=U_par
@@ -269,7 +287,7 @@
         endif
         
         if(K_rb.ne.0)then
-           call new_U_par_rb(Nswimer,CONF(:,1:Nswimer),RADII(1:Nswimer),Ftotal_swimer,U_pos_swimer,U_par_rb,q_rb)
+           call new_U_par_rb(Nswimer,RADII(1:Nswimer),Ftotal_swimer,U_pos_swimer,U_par_rb,q_rb)
            write(*,*) 'U_par_swimmer_____swimmer_____swimmer_____swimmer_____okok'
         endif
            
@@ -303,14 +321,16 @@
           U_pos(1:6*Nfilament)=U_pos_filament
         endif
          
+        if(IsPeriod.and.FTS_method) then
+          call arrangement(RPP,RPQ,RQQ,mu,NN)
+          
+          SijN_hyd=matmul(mu,EIN)
+          
+          call Rheology(CONF,RPQ,RPP,Fe_inter,SijN_FP)
 
-        call arrangement(RPP,RPQ,RQQ,mu,NN)
-        
-        SijN_hyd=matmul(mu,EIN)
-        
-        call Rheology(CONF,RPQ,RPP,Fe_inter,SijN_FP)
+          SijN_B=matmul(transpose(RPQ),UB)
+        endif
 
-        SijN_B=matmul(transpose(RPQ),UB)
        !do i=1,NN-Nb
          ! mass = pho_par*4.0_8/3.0_8*pai*RADII(i)**3
          ! do j=1,3 
@@ -338,10 +358,13 @@
 
         RPQ=0.0_8
         RQQ=0.0_8
+
         UB=0.0_8
         do I=1,3*NN
           UB(I)=u_brown(I)
         enddo
+
+
         if(FTS_method)then
          call MobToResist_FTS(APP,APQ,AQQ,NN,RPP0,RPQ0,RQQ0)
         else
@@ -350,14 +373,16 @@
 
         call arrangResist(NN,rfu,rfe,rse,RPP0,RPQ0,RQQ0,RPP,RPQ,RQQ)
 
-        if(K_rb.ne.0)then
-           call new_vel(NN,CONF,RPP,RPQ,Fe,EIN,U_par,U_par_rb,q_rb)
-           call calc_uo_bg(K_rb,conf_rb,uo_bg_rb)
-           U_par_rb=U_par_rb+uo_bg_rb
-           !write(*,*) 'swimmer_____swimmer_____swimmer_____swimmer_____okok'
-           !write(*,*) 'K_rb===',K_rb  
-        else
 
+        if(K_rb.ne.0)then
+          call new_vel(NN,RPP,RPQ,Fe,EIN,U_par,U_par_rb,q_rb)
+          !CALL swim_rbmconn(NN,rbmconn,q_rb)
+          !call con_hydro_SD_FT(rbmconn,APP,rfu,Fe,U_Par)
+          call calc_uo_bg(K_rb,conf_rb,uo_bg_rb)
+          U_par_rb=U_par_rb+uo_bg_rb
+          write(*,*) 'swimmer_____swimmer_____swimmer_____swimmer_____okok'
+          !write(*,*) 'K_rb===',K_rb  
+        else
           APPR=RPP  
           !write(*,*) '1111111111111111111okok'
           CALL MATREV(APPR,6*NN)
@@ -367,15 +392,19 @@
           else
            U_par = matmul(APPR,Fe)
           endif
-
         endif
 
-        call arrangement(RPP,RPQ,RQQ,mu,NN)
-        SijN_hyd=matmul(mu,EIN)
-        
-        call Rheology(CONF,RPQ,RPP,Fe_inter,SijN_FP)
 
-        SijN_B=matmul(transpose(RPQ),UB)
+
+        if(IsPeriod.and.FTS_method) then
+          call arrangement(RPP,RPQ,RQQ,mu,NN)
+          
+          SijN_hyd=matmul(mu,EIN)
+          
+          call Rheology(CONF,RPQ,RPP,Fe_inter,SijN_FP)
+
+          SijN_B=matmul(transpose(RPQ),UB)
+        endif
 
       end SUBROUTINE STEPPER_NOGmres
 
@@ -422,13 +451,25 @@
       REAL*8,intent(in):: APP(6*NN,6*NN),APQ(6*NN,5*NN),AQQ(5*NN,5*NN)
       REAL*8,intent(in):: rfu(6*NN,6*NN),rfe(6*NN,5*NN),rse(5*NN,5*NN)
       real*8,intent(in):: EIN(5*NN),Fe(6*NN)
-      real(8),intent(out):: SijN(5*NN),U_par(6*NN)
-      if(FTS_method)then
-       call hydro_SD_FTS(APP,APQ,AQQ,rfu,rfe,rse,Fe,EIN,U_Par,SijN) 
-      else
-       call hydro_SD_FT(APP,rfu,Fe,U_Par)  
-      endif
+      real*8,intent(out):: SijN(5*NN),U_par(6*NN)
 
+
+      real*8 rbmconn(6*NN, 6*K_rb),uo_bg_rb(6*K_rb)
+      integer i
+      if(FTS_method)then
+       call hydro_SD_FTS(APP,APQ,AQQ,rfu,rfe,rse,Fe,EIN,U_Par,SijN)
+      else
+       if(K_rb.ne.0)then
+           CALL swim_rbmconn(NN,rbmconn,q_rb)
+           call con_hydro_SD_FT(rbmconn,APP,rfu,Fe,U_Par)
+           call calc_uo_bg(K_rb,conf_rb,uo_bg_rb)
+           U_par_rb=U_par_rb+uo_bg_rb
+           write(*,*) 'Gmres_swimmer_____swimmer_____swimmer_____swimmer_____okok'
+        else
+            call hydro_SD_FT(APP,rfu,Fe,U_Par)  
+        endif
+      endif
+      write(*,*) 'Gmres_okok_________________________________________________'
       end SUBROUTINE STEPPER_Gmres
 
       SUBROUTINE hydro_SD_FTS(APP,APQ,AQQ,rfu,rfe,rse,Fe,EIN,U_Par,SijN)     ! RETURNS NEW T=T+DT
@@ -528,7 +569,59 @@
       if ( err<LINERR*1e-6  ) then
         print*, "gmres_mod_gmres_test = ok"
       endif
-      END
+      END SUBROUTINE hydro_SD_FT
+
+      SUBROUTINE con_hydro_SD_FT(rbmconn,APP,rfu,Fe,U_Par)      ! RETURNS NEW T=T+DT
+      IMPLICIT NONE
+      REAL*8,intent(in):: rbmconn(6*NN, 6*K_rb)
+      REAL*8,intent(in):: APP(6*NN,6*NN),rfu(6*NN,6*NN),Fe(6*NN)
+      real(8),intent(out):: U_Par(6*NN)
+
+      REAL*8 Fe_eval(6*NN),Fe_rbmconn(6*K_rb)
+      real*8 RlubM(6*NN,6*NN),P_rbmconn(6*K_rb,6*K_rb),P(6*NN,6*NN),eyelam(6*NN,6*NN)
+      real*8 Fff(6*NN),PFe(6*NN)
+
+      integer:: iter, nb,i
+      real(8)  :: res,err,lam_inv
+
+      
+      !P_rbmconn=matmul(transpose(rbmconn),rbmconn)
+      eyelam=0.0_8
+      if(uselub)then
+          lam_inv=1.0_8/6.0_8
+          forall(i=1:6*NN)
+             eyelam(i,i)=lam_inv
+          end forall
+          RlubM=lam_inv*rfu
+          forall(i=1:6*NN)
+            RlubM(i,i)=RlubM(i,i)+1.0_8
+          end forall
+          P_rbmconn=matmul(matmul(transpose(rbmconn),RlubM),rbmconn)
+      else
+          lam_inv=1.0_8
+          forall(i=1:6*NN)
+             eyelam(i,i)=lam_inv
+          end forall
+          P_rbmconn=matmul(transpose(rbmconn),rbmconn)
+      endif
+
+      call MATREV(P_rbmconn,6*K_rb)
+      P=matmul(matmul(rbmconn,P_rbmconn),transpose(rbmconn))
+      P=matmul((eyelam-APP),P)
+      PFe=matmul(P,Fe)
+      call simplegmres(Fff,6*NN,PFe,P+APP,iter,nb,res)
+      Fe_rbmconn=matmul(transpose(rbmconn),(Fe-Fff))
+
+      U_par_rb=lam_inv*matmul(P_rbmconn,Fe_rbmconn)
+
+      U_Par=matmul(rbmconn,U_par_rb)
+      !Fe_eval=Fff+matmul(rfu,U_Par)
+      !=norm_2(Fe_eval-Fe)
+      !if ( err<LINERR*1e-6  ) then
+       ! print*, "gmres_mod_gmres_test = ok"
+      !endif
+      END SUBROUTINE con_hydro_SD_FT
+
 
       SUBROUTINE GAUSS(G)
       IMPLICIT NONE

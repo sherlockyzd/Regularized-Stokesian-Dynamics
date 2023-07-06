@@ -353,20 +353,13 @@
 
 
 
-
-
-
-
-      subroutine INITIAL_SIZE(T)
+      subroutine INITIAL_SIZE()
       IMPLICIT NONE
-      REAL*8,intent(out):: T
+      !REAL*8,intent(out):: T
       
       INTEGER:: I,istat
-      LOGICAL:: THERE
-
-      
-      T=T0
-
+      LOGICAL:: THERE 
+      !T=T0
       INQUIRE( FILE='initial_config.dat', EXIST=THERE ) 
       IF ( THERE ) THEN
        OPEN(11,FILE='initial_config.dat')
@@ -423,37 +416,17 @@
            gamaZ=gamaZ*pai/180.0_8
            READ(11,*) LB
            NN=Np+Nb
-           ALLOCATE( CONF(3,NN),STAT=istat )
-           ALLOCATE( RADII(NN),STAT=istat )
-           DO I=1,Np
-             READ(11,*) T,CONF(1,I),CONF(2,I),CONF(3,I),RADII(I)
-           ENDDO
-           if(K_rb.ne.0) then
-              call swim_rotate_rb(Nswimer,CONF(:,1:Nswimer),alphaX,betaY,gamaZ)
-           endif
-
         elseif(IsCaseLattice==1) then      !SC
            Np=NX*NY*NZ
            NN=Np+Nb
-           ALLOCATE( CONF(3,NN) ,STAT=istat)
-           ALLOCATE( RADII(NN) ,STAT=istat)
-
         elseif(IsCaseLattice==2) then        !BCC
            Np=NX*NY*NZ*2
            NN=Np+Nb
-           ALLOCATE( CONF(3,NN) ,STAT=istat)
-           ALLOCATE( RADII(NN) ,STAT=istat)
-
         elseif(IsCaseLattice==3) then        !FCC
            Np=NX*NY*NZ*4
            NN=Np+Nb
-           ALLOCATE( CONF(3,NN) ,STAT=istat)
-           ALLOCATE( RADII(NN) ,STAT=istat)
         endif
 
-        if(useDEM) then 
-            ALLOCATE( CONF_DEM(3,Np),STAT=istat)
-        endif
         CLOSE(11)
       ELSE
          WRITE(0,*) "error: no initial_config.dat file " &
@@ -465,21 +438,56 @@
       END subroutine INITIAL_SIZE
 
 
-      SUBROUTINE INITIAL_CONF()
+
+      SUBROUTINE INITIAL_CONF(T,U_pos)
       IMPLICIT NONE
-      !REAL*8,intent(in):: T      
+      REAL*8,intent(out):: T
+      REAL*8,intent(inout):: U_pos(6*NN)    
       INTEGER I,J,K,IJK,mm,num,istat   
       real*8 pos(3,3),Ireal1
+      LOGICAL hot_start
+      
+      T=T0
 
-       !nl=NX+0
       if(IsCaseLattice==0) then
-         do i=1,Np
-             write(*,*) CONF(:,i)
-         enddo
+         
+        ALLOCATE( CONF(3,NN),STAT=istat )
+        ALLOCATE( RADII(NN),STAT=istat )
+        OPEN(11,FILE='initial_config.dat')
+        READ(11,*)
+        READ(11,*)
+        READ(11,*)
+        READ(11,*)
+        READ(11,*)
+        READ(11,*)
+        READ(11,*)
+        READ(11,*)
+        READ(11,*) hot_start
+        
+        if(hot_start) then
+            DO I=1,Np
+              READ(11,*) T,CONF(1,I),CONF(2,I),CONF(3,I),RADII(I),U_pos(3*(I-1)+1), &
+                  & U_pos(3*(I-1)+2),U_pos(3*(I-1)+3)
+            ENDDO
+        else
+            DO I=1,Np
+              READ(11,*) T,CONF(1,I),CONF(2,I),CONF(3,I),RADII(I)
+            ENDDO
+        endif
+        if(K_rb.ne.0) then
+          call swim_rotate_rb(Nswimer,CONF(:,1:Nswimer),alphaX,betaY,gamaZ)
+        endif
 
+        write(*,*) 'hot_start===',hot_start,'conf===================='
+        do i=1,Np
+            write(*,*) i,CONF(:,i),U_pos(3*(I-1)+1), &
+              & U_pos(3*(I-1)+2),U_pos(3*(I-1)+3)
+        enddo
+        CLOSE(11)
 
-       elseif(IsCaseLattice==1) then      !SC
-
+      elseif(IsCaseLattice==1) then      !SC
+         ALLOCATE( CONF(3,NN) ,STAT=istat)
+         ALLOCATE( RADII(NN) ,STAT=istat)
          conf=0.0_8
          radii=0.0_8
          IJK=0
@@ -501,8 +509,9 @@
            conf(3,i)=conf(3,i)+LB(3)/NZ*0.2_8
          enddo
 
-       elseif(IsCaseLattice==2) then        !BCC
-
+      elseif(IsCaseLattice==2) then        !BCC
+         ALLOCATE( CONF(3,NN) ,STAT=istat)
+         ALLOCATE( RADII(NN) ,STAT=istat)
          conf=0.0_8
          radii=0.0_8
          IJK=0
@@ -541,11 +550,11 @@
            conf(3,i)=conf(3,i)+LB(3)/NZ*0.2_8
          enddo
 
-       elseif(IsCaseLattice==3) then        !FCC
-
+      elseif(IsCaseLattice==3) then        !FCC
+         ALLOCATE( CONF(3,NN) ,STAT=istat)
+         ALLOCATE( RADII(NN) ,STAT=istat)
          conf=0.0_8
          radii=0.0_8
-
          pos=0.5_8
          pos(1,1)=0
          pos(2,2)=0
@@ -591,10 +600,11 @@
            conf(3,i)=conf(3,i)+LB(3)/NZ*0.2_8
          enddo
 
-       endif
+      endif
 
 
         if(useDEM)then
+          ALLOCATE( CONF_DEM(3,Np),STAT=istat)
           CONF_DEM=conf(:,1:Np)
         endif
         

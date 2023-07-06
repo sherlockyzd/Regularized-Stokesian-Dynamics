@@ -4,7 +4,8 @@
   module hydro_lub_mod
   use prutil
   use size,only:NB
-  use TENSORS,only:Y21,Y22,Y2,front
+  use TENSORS,only:Y21,Y22,Y2,front,pai
+  use SYS_property,only:mu_f
   USE method
   use CONFIG, only:RADII
   use period_bdy_tools,only:PER_SKEW_CORRECTION
@@ -300,9 +301,9 @@
            enddo
           enddo
 
-      rfu=APPl*6.0_8
-      rfe=transpose(AQPl)*6.0_8
-      rse=AQQl*6.0_8
+      rfu=APPl*6.0_8*(pai*mu_f)
+      rfe=transpose(AQPl)*6.0_8*(pai*mu_f)
+      rse=AQQl*6.0_8*(pai*mu_f)
     write(*,*) 'ok lub-------------------------'
     end subroutine lubmxcalc
 

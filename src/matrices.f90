@@ -494,9 +494,11 @@
       Mtemp(1:6*NN,6*NN+1:11*NN)=APQ
       Mtemp(6*NN+1:11*NN,1:6*NN)=transpose(APQ)
       Mtemp(6*NN+1:11*NN,6*NN+1:11*NN)=AQQ
-      write(*,*) 'ok0-------------------'
+
+      write(*,*) '----------MobToResist_FTS----start-------------------------------'
       CALL MATREV(Mtemp,11*NN)
-      write(*,*) 'ok2-------------------'
+      write(*,*) 'ok----MobToResist_FTS----------------MATREV(Mtemp,11*NN)---------'
+
       RPP=Mtemp(1:6*NN,1:6*NN)
       RPQ=Mtemp(1:6*NN,6*NN+1:11*NN)
       RQQ=Mtemp(6*NN+1:11*NN,6*NN+1:11*NN)

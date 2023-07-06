@@ -16,7 +16,7 @@
    IMPLICIT NONE
    private
 
-   public:: new_vel,new_U_par_rb,new_conf_swim,rbmconn_Init,new_q_rb_swim!,swim_rbmconn,swim_uo_bg,
+   public:: new_vel,new_U_par_rb,new_conf_swim,rbmconn_Init,new_q_rb_swim,swim_rbmconn!,swim_uo_bg,
 
    contains
 
@@ -30,7 +30,7 @@
     real*8,intent(in):: U_par_rb(6*K_rb)
     real*8,intent(inout):: conf_rb(3,K_rb)
     type(quaternion),intent(inout)::q_rb(K_rb)
-    real*8,intent(out):: CONF(3,Nswimer)
+    real*8,intent(out):: conf(3,Nswimer)
 
 
     integer :: ii, jj!, jj2, kk, ll, mm,num_rb
@@ -53,7 +53,7 @@
           CALL PERIOD_CORRECTION(conf_rb(:,ii),LB,T)
          ENDDO
       endif
-
+      
       call conf_rb2conf(Nswimer,conf_rb,conf,q_rb)
 
       if(simplePeriod) then
@@ -61,8 +61,6 @@
           CALL PERIOD_CORRECTION(conf(:,ii),LB,T)
          ENDDO
       endif
-
-
 
       do ii=1,K_rb
         jj=3*K_rb+3*(ii-1)
@@ -72,7 +70,7 @@
         q_norm=qadd(q_rb(ii),dq)
         q_rb(ii)=qscal(1.0_8/qnorm(q_norm) , q_norm)
         !write(*,*) "ii==",ii
-        CALL qprint(q_rb(ii))
+        !CALL qprint(q_rb(ii))
       enddo
       
 
@@ -84,7 +82,7 @@
     INTEGER,intent(in)::NN
     REAL*8,intent(in):: conf_rb(3,K_rb)
     type(quaternion),intent(in)::q_rb(K_rb)
-    real*8,intent(out):: CONF(3,NN)
+    real*8,intent(out):: conf(3,NN)
 
     integer :: ii, jj, kk, KK_rb
     integer ::num_rb_sum,num_rb
@@ -95,16 +93,16 @@
     do  KK_rb=1,K_rb
         num_rb=KK_rbmconn(KK_rb)
         swimcm_rotation=quat2rotmat(q_rb(KK_rb))
-       ! do jj=1,3
-       ! write(*,*) "KK_rb and swimcm_rotation(jj,:)",KK_rb,jj,swimcm_rotation(jj,:)
-       ! enddo
+        !do jj=1,3
+        !write(*,*) "KK_rb and swimcm_rotation(jj,:)",KK_rb,jj,swimcm_rotation(jj,:)
+        !enddo
         do ii = num_rb_sum+1, num_rb_sum+num_rb     
             swimcm( : ) = matmul(swimcm_rotation,conf_rb_vector(:,ii))
-       !     write(*,*) "conf_rb_vector(:,ii)=",ii,conf_rb_vector(:,ii)
-         !   write(*,*) "swimcm(:,ii)=",ii,swimcm(:)
+           ! write(*,*) "conf_rb_vector(:,ii)=",ii,conf_rb_vector(:,ii)
+           !  write(*,*) "swimcm(:,ii)=",ii,swimcm(:)
             conf(:,ii)=conf_rb(:,KK_rb)+swimcm(:)
         end do  
-        num_rb_sum=num_rb_sum+num_rb    
+        num_rb_sum=num_rb_sum+num_rb
     end do
     end subroutine conf_rb2conf
 
@@ -166,10 +164,10 @@
 
 
 
-    subroutine new_U_par_rb(NN,CONF,RADII,Ftotal,U_pos,U_par_rb,q_rb)
+    subroutine new_U_par_rb(NN,RADII,Ftotal,U_pos,U_par_rb,q_rb)
     IMPLICIT NONE
     INTEGER,intent(in)::NN
-    REAL*8,intent(in):: CONF(3,NN),RADII(NN),Ftotal(6*NN)!
+    REAL*8,intent(in):: RADII(NN),Ftotal(6*NN)!
     type(quaternion),intent(in)::q_rb(K_rb)
     real*8,intent(inout):: U_par_rb(6*K_rb)
     real*8,intent(out):: U_pos(6*NN)
@@ -194,7 +192,7 @@
     CALL swim_rbmconn_Inertial(q_rb,rbmconn_Inertial,rbmconn_Inertial_inverse)
     CALL swim_rbmconn_torque(rbmconn_Inertial,U_par_rb,rbmconn_torque)
 
-    CALL swim_rbmconn(NN,CONF,rbmconn,q_rb)
+    CALL swim_rbmconn(NN,rbmconn,q_rb)
     swimhold_Ftotal=matmul(transpose(rbmconn),Ftotal)
     swimhold_Ftotal(3*K_rb+1:6*K_rb)=swimhold_Ftotal(3*K_rb+1:6*K_rb)-rbmconn_torque
 
@@ -212,7 +210,7 @@
 
 
 
-    subroutine new_vel(NN,CONF,rfu,rfe,fext,einf,u,U_par_rb,q_rb)
+    subroutine new_vel(NN,rfu,rfe,fext,einf,u,U_par_rb,q_rb)
     ! ------------------------------------------------------------ !
     ! This routine computes the contributions to the particle
     ! velocities due to a swimming gait and an external force/torque.
@@ -224,7 +222,7 @@
     ! ------------------------------------------------------------ !
       IMPLICIT NONE
       INTEGER,intent(in)::NN
-      REAL*8,intent(in):: CONF(3,NN),rfu(6*NN,6*NN),rfe(6*NN,5*NN),fext(6*NN),einf(5*NN)
+      REAL*8,intent(in):: rfu(6*NN,6*NN),rfe(6*NN,5*NN),fext(6*NN),einf(5*NN)
       type(quaternion),intent(in)::q_rb(K_rb)
       real*8,intent(out):: u(6*NN),U_par_rb(6*K_rb)
 
@@ -240,7 +238,7 @@
         !real*8, dimension( 3, 3 ) :: ee, xf
         !real*8 :: omega_gate
 
-        CALL swim_rbmconn(NN,CONF,rbmconn,q_rb)
+        CALL swim_rbmconn(NN,rbmconn,q_rb)
         !do ii=1,6*NN
          !   write(*,*) rbmconn(ii,:)
         !enddo
@@ -311,13 +309,17 @@
         !udiff(:) = 0.d0
         udiff=matmul(rbmconn,U_par_rb)
         u(:)=udiff( : ) + ugate( : )
+        !do ii=1,K_rb
+            !write(*,*) 'i,U_par_rb===',ii,U_par_rb(3*(ii-1)+1:3*ii)
+        !    write(*,*) 'i,Fetorue====',i,Fe(3*NN+3*(i-1)+1:3*NN+3*i)
+        !enddo
     !******************************************************************************!
     end subroutine new_vel
 
 
 
 
-    subroutine swim_rbmconn(NN,CONF,rbmconn,q_rb)
+    subroutine swim_rbmconn(NN,rbmconn,q_rb)
     ! ------------------------------------------------------------ !
     ! This routine computes the contributions to the particle
     ! velocities due to a swimming gait and an external force/torque.
@@ -329,7 +331,7 @@
     ! ------------------------------------------------------------ !
       IMPLICIT NONE
       INTEGER,intent(in)::NN
-      REAL*8,intent(in):: CONF(3,NN)
+      !REAL*8,intent(in):: CONF(3,NN)
       type(quaternion),intent(in)::q_rb(K_rb)
       real*8,intent(out):: rbmconn(6*NN, 6*K_rb)
 
@@ -587,17 +589,10 @@
       enddo
 
 
-        CALL swim_rbmconn(NN,CONF,rbmconn,q_rb)
+        CALL swim_rbmconn(NN,rbmconn,q_rb)
         U_par_rb=0.0_8
         U_pos=matmul(rbmconn,U_par_rb)
     end subroutine rbmconn_Init
-
-
-
-
-
-
-
 end  Module conglomerate
 
 
@@ -681,7 +676,7 @@ end  Module conglomerate
           !write(*,*) 'NN===kkkkkkk',NN
           !write(*,*) 'CONF',CONF(:,:)
 
-          CALL swim_rbmconn(NN,CONF,rbmconn)
+          CALL swim_rbmconn(NN,rbmconn,q_rb)
           uo_rb_bg=0.0_8
           num_rb_sum=0
             do  KK_rb=1,K_rb
@@ -730,7 +725,7 @@ end  Module conglomerate
          !uo_rb_bg=0.0_8
          call calc_uo_bg(K_rb,conf_rb,uo_rb_bg)
 
-         CALL swim_rbmconn(NN,CONF,rbmconn)
+         CALL swim_rbmconn(NN,rbmconn,q_rb)
          
          uo_bg=matmul(rbmconn,uo_rb_bg)
 

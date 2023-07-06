@@ -401,8 +401,8 @@
           endif
             rx=conf(:,alpha)-conf(:,beta)
             r=sqrt(sum(rx*rx))
-            r_ave=radii(alpha)+radii(beta)+heq
-            !s=r/r_ave
+            r_ave=radii(alpha)+radii(beta)!+heq
+            s=r-r_ave
             if(r.le.r_ave) then
             pos_collision=.true.
             write(*,*) 'pos_collision=.true.',s,alpha,beta
