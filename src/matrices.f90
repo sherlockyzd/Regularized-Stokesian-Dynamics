@@ -352,8 +352,8 @@
    ! write(*,*) 'Rot=',R(2,:)
    ! write(*,*) 'Rot=',R(3,:)
 
-    KperTT=0.d0
-    KperRR=0.d0
+      KperTT=0.d0
+      KperRR=0.d0
       DO I=1,3
          KperTT=KperTT+T(i,i)
          KperRR=KperRR+R(i,i)
@@ -362,99 +362,7 @@
       KperTT=KperTT/3.d0/(6.0_8*pai*mu_f*radii_test)
       KperRR=KperRR/3.d0/(8.0_8*pai*mu_f*radii_test**3)
 
-      end
-
-!*****************************************************************
-!**********************************************************
-!**********************************************************
-!**********************************************************
-
-
-      SUBROUTINE MOB_TO_FRI(APP,APQ,AQQ,NN)
-      IMPLICIT NONE
-      INTEGER,intent(in):: NN
-      REAL*8,intent(in):: APP(6*NN,6*NN)
-      REAL*8,intent(inout):: APQ(6*NN,5*NN),AQQ(5*NN,5*NN)
-
-      REAL*8 AQP(5*NN,6*NN)
-
-      CALL MATREV(APP,6*NN)
-
-      AQP = TRANSPOSE(APQ)
-      APQ = MATMUL(APP,APQ)
-      AQQ = AQQ + MATMUL(AQP,APQ)
-
-      RETURN
-      END
-
-
-!***********************************************************
-!***********************************************************
-!***********************************************************
-
-
-      SUBROUTINE FRI_TO_MOB(APP,APQ,AQQ,NN)
-      IMPLICIT NONE
-      INTEGER,intent(in):: NN
-      REAL*8,intent(in):: APP(6*NN,6*NN)
-      REAL*8,intent(inout):: APQ(6*NN,5*NN),AQQ(5*NN,5*NN)
-      REAL*8 AQP(5*NN,6*NN)
-
-      CALL MATREV(APP,6*NN)
-      AQP = TRANSPOSE(APQ)
-      APQ = MATMUL(APP,APQ)
-      AQQ = AQQ - MATMUL(AQP,APQ)
-
-      RETURN
-      END
-
-
-!***********************************************************
-!***********************************************************
-!***********************************************************
-
-
-      SUBROUTINE FRI_TO_MOB_RED(APP,APQ,AQQ,NN)
-      IMPLICIT NONE
-      INTEGER,intent(in):: NN
-      REAL*8,intent(in):: APP(6*NN,6*NN)
-      REAL*8,intent(inout):: AQQ(5*NN,5*NN),APQ(6*NN,5*NN)
-      REAL*8 AQP(5*NN,6*NN)
-
-      AQP = TRANSPOSE(APQ)
-      APQ = MATMUL(APP,APQ)
-      AQQ = AQQ - MATMUL(AQP,APQ)
-
-      RETURN
-      END
-
-
-!***********************************************************
-!***********************************************************
-!***********************************************************
-
-      SUBROUTINE INVFRI_TO_FRI(APP,APQ,AQQ,NN)
-      IMPLICIT NONE
-      INTEGER ,intent(in)::NN
-      REAL*8 ,intent(inout)::APP(6*NN,6*NN),APQ(6*NN,5*NN),AQQ(5*NN,5*NN)
-      REAL*8 AP(11*NN,11*NN)
-
-      AP(11*NN,11*NN) = 0.D0
-
-      AP(1:6*NN,1:6*NN) = APP
-      AP(1:6*NN,6*NN+1:11*NN) = APQ 
-      AP(6*NN+1:11*NN,1:6*NN) = TRANSPOSE(APQ)
-      AP(6*NN+1:11*NN,6*NN+1:11*NN) = AQQ 
-
-      CALL MATREV(APP,6*NN)
-      CALL MATREV(AP,11*NN)
-
-      APP = AP(1:6*NN,1:6*NN)
-      APQ = AP(1:6*NN,6*NN+1:11*NN)
-      AQQ = AP(6*NN+1:11*NN,6*NN+1:11*NN)
-
-      RETURN
-      END
+      end subroutine Kpermeability
 
 
 !***********************************************************
@@ -505,7 +413,7 @@
       !RQQ=AQQ
       !CALL MATREV(RQQ,5*NN)
 
-      end
+      end subroutine MobToResist_FTS
 
       subroutine MobToResist_FT(APP,NN,RPP)
       implicit none
@@ -517,7 +425,7 @@
       RPP=APP
       CALL MATREV(RPP,6*NN)
 
-      end
+      end subroutine MobToResist_FT
 
 
 
@@ -534,7 +442,7 @@
 
       mu=matmul(matmul(transpose(RPQ),RPPINV),RPQ)-RQQ
       !mu=-RQQ
-      end
+      end subroutine arrangement
 
 
       subroutine rotateX(alpha,mat_X_rotation)
