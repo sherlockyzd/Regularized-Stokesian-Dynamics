@@ -24,25 +24,29 @@ contains
     integer , intent(in)   :: n
     real(RP), dimension(n,n),intent(in) :: A
     real(RP), dimension(n),intent(in) :: rhs
-    real(RP), dimension(n),intent(out) :: xout
+    real(RP), dimension(n),intent(inout) :: xout
     integer , intent(out)   :: iter, nb
     real(RP), intent(out)   :: res
 
 
     real(RP), dimension(n)   ::  sol2
     real(RP) ::  tol
+    integer:: itermax
 
 
-    xout = 0.0_RP
-       !! searching sol2 solution of A*x = rhs
-       tol = REAL_TOL * 100.0_RP
-       call gmres(xout, iter, nb, res, rhs, A_prod, tol, 100, 2, 0)
+    !xout = 0.0_RP
+    itermax=200
+    !! searching sol2 solution of A*x = rhs
+    tol = REAL_TOL * 100.0_RP
+    call gmres(xout, iter, nb, res, rhs, A_prod, tol, itermax, 2, 0)
        
-       !! discrepency between the exact solution 
-       !! and the computed solution
+    !! discrepency between the exact solution 
+    !! and the computed solution
 
 
     !print*, "gmres_mod_gmres_test = ok"
+    print*, "iters=============", iter
+    print*, "final residual====", res
 
     contains
 

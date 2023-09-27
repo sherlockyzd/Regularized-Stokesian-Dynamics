@@ -149,7 +149,7 @@
     if(Oscillation_shear)then
       Call Init_frequency(LB,radii,frequency)
     else
-      frequency=1.d0
+      frequency=1.d0/lambda_time
     endif
 
     GAMMA=GAMMA_alpha*frequency

@@ -410,7 +410,7 @@
               write(*,*) 'error:Nswimer,Nfilament,Np====',Nswimer,Nfilament,Np
               CALL EXIT()
            endif
-           READ(11,*) alphaX,betaY,gamaZ
+           READ(11,*) alphaX,betaY,gamaZ,DX,DY,DZ
            alphaX=alphaX*pai/180.0_8
            betaY=betaY*pai/180.0_8
            gamaZ=gamaZ*pai/180.0_8
@@ -474,8 +474,12 @@
               READ(11,*) T,CONF(1,I),CONF(2,I),CONF(3,I),RADII(I)
             ENDDO
         endif
+
         if(K_rb.ne.0) then
           call swim_rotate_rb(Nswimer,CONF(:,1:Nswimer),alphaX,betaY,gamaZ)
+          CONF(1,1:Nswimer)=CONF(1,1:Nswimer)+DX
+          CONF(2,1:Nswimer)=CONF(2,1:Nswimer)+DY
+          CONF(3,1:Nswimer)=CONF(3,1:Nswimer)+DZ
         endif
 
         write(*,*) 'hot_start===',hot_start,'conf===================='

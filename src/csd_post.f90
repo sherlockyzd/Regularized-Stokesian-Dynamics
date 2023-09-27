@@ -471,10 +471,11 @@
           EPS(J,I,2)*omega_bg(2)+EPS(J,I,3)*omega_bg(3)
         enddo
       enddo
-      !write(*,*)'GAMMA=', GAMMA   
-      !write(*,*)'Eij=',Eij
-      !write(*,*)'omegaT=',omegaT
-
+      !write(*,*)'GAMMA=', GAMMA
+      !do I=1,3 
+      !  write(*,*)'i,Eij=',i,Eij(i,:)
+      !  write(*,*)'j,omegaT=',i,omegaT(i,:)
+      !enddo
      end
 
 
@@ -499,32 +500,26 @@
       real*8, intent(in) ::CONF(3,MM)
       real*8, intent(out)::uo_bg(6*MM)
 
-      real*8 u_bg_local(3)
+      real*8 u_bg_local(3),UOE(3,3)
       INTEGER i,j
-   
+
+      UOE=OmegaT+Eij
         do i=1,MM
-          u_bg_local=0.0_8
-          do j=1,3
+          !u_bg_local=0.0_8
+          !do j=1,3
           !U_bg_local=U_bg + Omega_bg * x + Einf_bg . x
-          u_bg_local(j)=u_bg(j)+(OmegaT(j,1)*CONF(1,i)    &
-            +OmegaT(j,2)*CONF(2,i)+OmegaT(j,3)*CONF(3,i)) &
-            +(Eij(j,1)*CONF(1,i)+Eij(j,2)*CONF(2,i)       &
-            +Eij(j,3)*CONF(3,i)) 
+          u_bg_local(:)=u_bg(:)+MATMUL(UOE,CONF(:,i))
+          !(OmegaT(j,1)*CONF(1,i)    &
+          !  +OmegaT(j,2)*CONF(2,i)+OmegaT(j,3)*CONF(3,i)) &
+          !  +(Eij(j,1)*CONF(1,i)+Eij(j,2)*CONF(2,i)       &
+          !  +Eij(j,3)*CONF(3,i)) 
           !fill in the U-Uinf, Omega-Omegainf vector
-          uo_bg(3*(i-1)+j)=u_bg_local(j)
-          uo_bg(3*MM+3*(i-1)+j)=omega_bg(j)
-          end do
+          uo_bg(3*(i-1)+1:3*i)=u_bg_local(:)
+          uo_bg(3*MM+3*(i-1)+1:3*MM+3*i)=omega_bg(:)
+          !end do
         end do
 
       end SUBROUTINE calc_uo_bg
-
-
-
-
-
-
-
-
 
       SUBROUTINE U_BDY_CORR(U_pos)
       IMPLICIT NONE

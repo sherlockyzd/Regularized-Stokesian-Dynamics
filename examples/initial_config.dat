@@ -1,10 +1,10 @@
 2 2 2                    ! number of spheres IsCaseLattice==T
-16                        ! number of spheres IsCaseLattice==F
-1 16                        !K_rb_conglomerate,Nswimer
-16                      !num_rb list
+100                        ! number of spheres IsCaseLattice==F
+1 100                        !K_rb_conglomerate,Nswimer
+100                      !num_rb list
 0 0                        !F_rb filament    Nfilament
 0                      !num_filament
-0 0 0                    !rotation angle:alphaX,betaY,gamaZ
+0 0 0 0 0 0                   !rotation angle:alphaX,betaY,gamaZ
 4.64 4.64 4.64                ! periodic box size
 false                    !hot start
 0 0 0 0 1

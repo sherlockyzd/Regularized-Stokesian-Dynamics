@@ -35,7 +35,7 @@ SrcT:= Prtcl_TypeDef.f90 Prtcl_Timer.f90 Prtcl_Parameters.f90 Prtcl_Decomp_2d.f9
 DEMsrc := $(addprefix $(DEMdir), ${SrcT}) 
 
 SrcT   := real_type.f90 basic_tools.f90 abstract_interfaces.f90 algebra_lin.f90 \
-          R1d_mod.f90 gmres_mod.f90 gmres_mod_gmres.f90
+          R1d_mod.f90 gmres_mod.f90 gmres_mod_gmres.f90 cg_matrix_omp.f90
 Gmressrc:= $(addprefix $(Gmresdir), ${SrcT}) 
 
 SrcT   := lapblas_double_excerpts.f 

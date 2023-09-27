@@ -26,7 +26,7 @@
       INTEGER, ALLOCATABLE :: Floc_index(:)
       REAL*8 W,u_bg(3),omega_bg(3),omegaT(3,3),Eij(3,3),EI_bg(6),radii_test,radii_true
       INTEGER POLY_LEN
-      real*8 alphaX,betaY,gamaZ 
+      real*8 alphaX,betaY,gamaZ,DX,DY,DZ
       END MODULE CONFIG
 
 !*************************************************

@@ -6,6 +6,7 @@
   USE LATTICE_BASE
   use SYS_property
   use gmres_mod_gmres
+  use conjugate_gradient_method
   use R1d_mod, only: norm_2
   use hydro_tools
   use period_bdy_tools,only:PERIOD_CORRECTION,SET_LATTICE_SKEW
@@ -118,11 +119,12 @@
             call INIT_uo_bg(conf,uo_bg)
             U_relative=0.0_8 !angular velocity
             U_relative=U_pos-uo_bg!-u_brown
-            
+            !do i=1,NN
+            !write(*,*) "i,U_bg",i,uo_bg(3*(i-1)+1:3*i),uo_bg(3*NN+3*(i-1)+1:3*NN+3*i)
+            !enddo        
             call STEPPER_UDEM(radii,APP,APQ,AQQ,rfu,rfe,rse,Fe,EIN,RPP,U_relative,U_pos,u_brown,SijN_hyd &
                & ,Fe_inter,SijN_FP,CONF,SijN_B)
             write(*,*) "Using STEPPER_UDEM success"
-             
         else
           if(useGMRESmethod) then
             call STEPPER_Gmres(APP,APQ,AQQ,rfu,rfe,rse,Fe,EIN,U_relative,SijN_hyd)
@@ -135,14 +137,9 @@
           call INIT_uo_bg(conf,uo_bg)
             !U_relative=0.0_8 !angular velocity
           U_pos=U_relative+uo_bg!-u_brown
-
         endif
-
-          
         CALL STEPPER_conf(conf,radii,U_relative,U_pos,T)
-         
-
-
+        !call exit()
       enddo NT_DEMdo
 
       
@@ -174,7 +171,6 @@
         !   write(*,*) 'i,U_par_rb===',i,U_par_rb(3*(i-1)+1:3*i)
         !    write(*,*) 'i,Fetorue====',i,Fe(3*NN+3*(i-1)+1:3*NN+3*i)
         !enddo
-
         call new_conf_swim(Nswimer,conf(:,1:Nswimer),T,U_par_rb,conf_rb,q_rb)
         write(*,*) 'new_conf_rb_rb_rb____okok'
       endif
@@ -263,7 +259,12 @@
         call arrangResist(NN,rfu,rfe,rse,RPP0,RPQ0,RQQ0,RPP,RPQ,RQQ)
 
         U_add=U_par
-        U_add(1:3*NN)=U_add(1:3*NN)-u_brown
+        !do i=1,NN
+        !  write(*,*) 'i,U_par',i,U_add(3*(i-1)+1:3*i)
+        !enddo
+        if(BROWN) then
+          U_add(1:3*NN)=U_add(1:3*NN)-u_brown
+        endif
         if(FTS_method)then
          Fh = matmul(RPQ,EIN)-matmul(RPP,U_add)
         else
@@ -461,7 +462,7 @@
       else
        if(K_rb.ne.0)then
            CALL swim_rbmconn(NN,rbmconn,q_rb)
-           call con_hydro_SD_FT(rbmconn,APP,rfu,Fe,U_Par)
+           call con_hydro_SD_FT(rbmconn,APP,rfu,Fe,U_Par,rfe,EIN)
            call calc_uo_bg(K_rb,conf_rb,uo_bg_rb)
            U_par_rb=U_par_rb+uo_bg_rb
            write(*,*) 'Gmres_swimmer_____swimmer_____swimmer_____swimmer_____okok'
@@ -507,8 +508,10 @@
 
       Gmres: do i=1,50
         F1_RHS(1:6*NN)=Fff
+        U1LHS=0.0_8
         call simplegmres(U1LHS,11*NN,matmul(grmb_RHS,F1_RHS),grmb_LHS,iter,nb,res)
         F2_RHS(6*NN+1:11*NN)=U1LHS(6*NN+1:11*NN)
+        U2LHS=U1LHS
         call simplegmres(U2LHS,11*NN,matmul(RM_LHS,F2_RHS),RM_RHS,iter,nb,res)
         Fff=U2LHS(1:6*NN)
         U_Par=U1LHS(1:6*NN)
@@ -561,6 +564,7 @@
         RlubM(i,i)=RlubM(i,i)+1.0_8
       end forall
 
+      Fff=Fe
       call simplegmres(Fff,6*NN,Fe,RlubM,iter,nb,res)
 
       U_Par=matmul(APP,Fff)
@@ -571,10 +575,10 @@
       endif
       END SUBROUTINE hydro_SD_FT
 
-      SUBROUTINE con_hydro_SD_FT(rbmconn,APP,rfu,Fe,U_Par)      ! RETURNS NEW T=T+DT
+      SUBROUTINE con_hydro_SD_FT(rbmconn,APP,rfu,Fe,U_Par,rfe,EIN)      ! RETURNS NEW T=T+DT
       IMPLICIT NONE
       REAL*8,intent(in):: rbmconn(6*NN, 6*K_rb)
-      REAL*8,intent(in):: APP(6*NN,6*NN),rfu(6*NN,6*NN),Fe(6*NN)
+      REAL*8,intent(in):: APP(6*NN,6*NN),rfu(6*NN,6*NN),Fe(6*NN),rfe(6*NN,5*NN),EIN(5*NN)
       real(8),intent(out):: U_Par(6*NN)
 
       REAL*8 Fe_eval(6*NN),Fe_rbmconn(6*K_rb)
@@ -608,7 +612,15 @@
       call MATREV(P_rbmconn,6*K_rb)
       P=matmul(matmul(rbmconn,P_rbmconn),transpose(rbmconn))
       P=matmul((eyelam-APP),P)
-      PFe=matmul(P,Fe)
+
+      if(uselub)then
+        PFe=matmul(P,Fe+matmul(rfe,EIN))
+      else
+        PFe=matmul(P,Fe)
+      endif
+
+      Fff=Fe
+      !call conjugate_gradient(6*NN,P+APP,PFe,Fff)
       call simplegmres(Fff,6*NN,PFe,P+APP,iter,nb,res)
       Fe_rbmconn=matmul(transpose(rbmconn),(Fe-Fff))
 
